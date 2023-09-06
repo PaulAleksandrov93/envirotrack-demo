@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import AuthContext from '../context/AuthContext';
 import './FilterParameters.css';
+
+
 
 const FilterParameters = ({ filterData, setFilterData }) => {
   const [selectedResponsible, setSelectedResponsible] = useState('');
@@ -8,12 +11,47 @@ const FilterParameters = ({ filterData, setFilterData }) => {
 
   const [responsibles, setResponsibles] = useState([]);
   const [rooms, setRooms] = useState([]);
+  const { authTokens } = useContext(AuthContext);
 
   useEffect(() => {
-    // Load responsibles and rooms from API and set them in the state
-    // ...
-
-  }, []);
+    // Функция для загрузки списка ответственных и помещений
+    const fetchData = async () => {
+      try {
+        // Загрузка списка ответственных
+        const responsiblesResponse = await fetch('http://localhost:8000/api/responsibles/', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + String(authTokens.access),
+          },
+        });
+  
+        if (responsiblesResponse.ok) {
+          const responsiblesData = await responsiblesResponse.json();
+          setResponsibles(responsiblesData);
+        }
+  
+        // Загрузка списка помещений
+        const roomsResponse = await fetch('http://localhost:8000/api/rooms/', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + String(authTokens.access),
+          },
+        });
+  
+        if (roomsResponse.ok) {
+          const roomsData = await roomsResponse.json();
+          setRooms(roomsData);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+  
+    // Вызываем функцию загрузки данных при первоначальной загрузке компонента
+    fetchData();
+  }, [authTokens.access]);
 
   const handleFilterChange = () => {
     const filters = {

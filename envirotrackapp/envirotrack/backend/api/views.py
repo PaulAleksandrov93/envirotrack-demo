@@ -13,6 +13,7 @@ from rest_framework import status
 from backend.models import Responsible, Room, EnviromentalParameters, MeasurementInstrument
 from .serializers import EnvironmentalParametersSerializer, RoomSelectSerializer, ResponsibleSerializer, MeasurementInstrumentSerializer
 
+
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
@@ -23,7 +24,8 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         # ...
 
         return token
-    
+
+
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
@@ -36,7 +38,6 @@ def getRoutes(request):
         '/api/token/refresh',
     ]
     return Response(routes)
-
 
 
 @api_view(['GET'])
@@ -70,6 +71,12 @@ def getMeasurementInstruments(request):
     serializer = MeasurementInstrumentSerializer(measurement_instruments, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def getResponsibles(request):
+    responsibles = Responsible.objects.all()
+    serializer = ResponsibleSerializer(responsibles, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -104,7 +111,7 @@ def createEnvironmentalParameters(request):
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
-    # Если сериализатор не прошел валидацию, возвращаем ошибку 400 с информацией об ошибках
+    
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

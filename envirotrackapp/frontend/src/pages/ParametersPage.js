@@ -37,23 +37,6 @@ const ParameterPage = () => {
     getCurrentUser();
   }, [authTokens.access]);
 
-  // const getParameter = useCallback(async () => {
-  //   if (id === 'new') return;
-  //   let response = await fetch(
-  //     `/api/parameters/${id}/`,
-  //     {
-  //       method: 'GET',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         Authorization: 'Bearer ' + String(authTokens.access),
-  //       },
-  //     }
-  //   );
-  //   let data = await response.json();
-  //   setParameter(data);
-  //   setSelectedRoom(data.room);
-  // }, [authTokens.access, id]);
-
   const getParameter = useCallback(async () => {
     if (id === 'new') return;
     let response = await fetch(

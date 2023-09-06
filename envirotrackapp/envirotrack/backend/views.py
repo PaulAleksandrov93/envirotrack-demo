@@ -16,18 +16,19 @@ def getRoutes(request):
     return Response(routes, safe=False)
 
 
-
 @api_view(['GET'])
 def getEnviromentalParameters(request):
     parameters = EnviromentalParameters.objects.all()
     serializer = EnvironmentalParametersSerializer(parameters, many=True, context={'request': request})
     return Response(serializer.data)
 
+
 @api_view(['GET'])
 def getEnviromentalParameter(request, pk):
     parameters = EnviromentalParameters.objects.get(id=pk)
     serializer = EnvironmentalParametersSerializer(parameters, many=False)
     return Response(serializer.data)
+
 
 @api_view(['GET'])
 def getRooms(request):
@@ -43,7 +44,6 @@ def createEnvironmentalParameters(request):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 @api_view(['PUT'])
