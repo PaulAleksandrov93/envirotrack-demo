@@ -19,7 +19,7 @@ class Responsible(models.Model):
     last_name = models.CharField(max_length=50, verbose_name='Фамилия')
     patronymic = models.CharField(max_length=50, verbose_name='Отчество')
     profession = models.ForeignKey(Profession, on_delete=models.SET_NULL, null=True, verbose_name='Профессия')
-    # rooms_responsible_for = models.ManyToManyField(Room, related_name="responsibles")
+    
 
     def __str__(self):        
         return f'{self.last_name} {self.first_name} {self.patronymic}'

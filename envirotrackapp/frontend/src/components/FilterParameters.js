@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import AuthContext from '../context/AuthContext';
 import './FilterParameters.css';
 
@@ -51,7 +51,7 @@ const FilterParameters = ({ filterData, setFilterData }) => {
   
     // Вызываем функцию загрузки данных при первоначальной загрузке компонента
     fetchData();
-  }, [authTokens.access]);
+  }, []);
 
   const handleFilterChange = () => {
     const filters = {

@@ -1,11 +1,12 @@
 # Фронтенд Dockerfile
-FROM node:14
+FROM node:16-alpine
 
 WORKDIR /frontend
 
-COPY package*.json ./
+COPY package*.json /frontend
 RUN npm install
-COPY . .
 
-EXPOSE 3000
+COPY . /frontend
+
+
 
