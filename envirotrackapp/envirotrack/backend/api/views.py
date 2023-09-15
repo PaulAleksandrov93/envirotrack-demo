@@ -40,20 +40,28 @@ def getRoutes(request):
     return Response(routes)
 
 
+# @api_view(['GET'])
+# @permission_classes([IsAuthenticated])
+# def getEnviromentalParameters(request):
+#     user = request.user
+#     parameters = EnviromentalParameters.objects.all()
+#     serializer = EnvironmentalParametersSerializer(parameters, many=True, context={'request': request})
+#     return Response(serializer.data)
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def getEnviromentalParameters(request):
     user = request.user
-    parameters = EnviromentalParameters.objects.all()
+    parameters = EnviromentalParameters.objects.all().prefetch_related('room', 'responsible', 'measurement_instrument')
     serializer = EnvironmentalParametersSerializer(parameters, many=True, context={'request': request})
     return Response(serializer.data)
-
 
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def getEnviromentalParameter(request, pk):
-    parameters = EnviromentalParameters.objects.get(id=pk)
+    parameters = EnviromentalParameters.objects.filter(id=pk).prefetch_related('room', 'responsible', 'measurement_instrument')
     serializer = EnvironmentalParametersSerializer(parameters, many=False)
     return Response(serializer.data)
 
@@ -119,53 +127,38 @@ def createEnvironmentalParameters(request):
 @permission_classes([IsAuthenticated])
 def updateEnvironmentalParameters(request, pk):
     try:
-        environmental_params = EnviromentalParameters.objects.get(pk=pk)
+        environmental_params = EnviromentalParameters.objects.select_related('room', 'responsible', 'measurement_instrument').get(pk=pk)
     except EnviromentalParameters.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     serializer = EnvironmentalParametersSerializer(instance=environmental_params, data=request.data, context={'request': request})
-    
+
     if serializer.is_valid():
-        # Обновляем информацию о пользователях
         if request.user.is_authenticated:
             serializer.save(modified_by=request.user)
 
-        # Получаем или создаем связанные объекты (measurement_instrument, room, responsible)
         room_data = request.data.get('room')
         responsible_data = request.data.get('responsible')
         measurement_instrument_data = request.data.get('measurement_instrument')
 
-        room = None
-        if room_data:
-            room, created = Room.objects.get_or_create(room_number=room_data.get('room_number'))
+        room, created = Room.objects.get_or_create(room_number=room_data.get('room_number')) if room_data else (None, False)
+        responsible, created = Responsible.objects.get_or_create(
+            first_name=responsible_data.get('first_name'),
+            last_name=responsible_data.get('last_name'),
+            patronymic=responsible_data.get('patronymic')
+        ) if responsible_data else (None, False)
+        measurement_instrument, created = MeasurementInstrument.objects.get_or_create(**measurement_instrument_data) if measurement_instrument_data else (None, False)
 
-        responsible = None
-        if responsible_data:
-            responsible, created = Responsible.objects.get_or_create(
-                first_name=responsible_data.get('first_name'),
-                last_name=responsible_data.get('last_name'),
-                patronymic=responsible_data.get('patronymic')
-            )
-
-        measurement_instrument = None
-        if measurement_instrument_data:
-            measurement_instrument, created = MeasurementInstrument.objects.get_or_create(
-                **measurement_instrument_data
-            )
-
-        # Присваиваем связанные объекты перед сохранением
         environmental_params.room = room
         environmental_params.responsible = responsible
         environmental_params.measurement_instrument = measurement_instrument
 
-        # Сохраняем запись
         environmental_params.save()
 
         return Response(serializer.data)
-    
-    # Если сериализатор не прошел валидацию, возвращаем ошибку 400 с информацией об ошибках
-    print(serializer.errors)
+
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])

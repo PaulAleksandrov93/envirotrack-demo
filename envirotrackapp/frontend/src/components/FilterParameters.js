@@ -78,7 +78,7 @@ const FilterParameters = ({ filterData, setFilterData }) => {
         <option value="">Выберите ответственного</option>
         {responsibles.map((responsible) => (
           <option key={responsible.id} value={responsible.id}>
-            {responsible.name}
+            {responsible}
           </option>
         ))}
       </select>
@@ -90,7 +90,7 @@ const FilterParameters = ({ filterData, setFilterData }) => {
         <option value="">Выберите помещение</option>
         {rooms.map((room) => (
           <option key={room.id} value={room.id}>
-            {room.name}
+            {room}
           </option>
         ))}
       </select>

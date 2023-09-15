@@ -29,7 +29,7 @@ const ParameterPage = () => {
           }
         );
         const data = await response.json();
-        setCurrentUser(data);
+        setCurrentUser(data); 
       } catch (error) {
         console.error('Error fetching current user:', error);
       }
