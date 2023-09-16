@@ -2,9 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import AuthContext from '../context/AuthContext';
 import './FilterParameters.css';
 
-
-
-const FilterParameters = ({ filterData, setFilterData }) => {
+const FilterParameters = ({ onFilterChange, onResetFilters }) => {
   const [selectedResponsible, setSelectedResponsible] = useState('');
   const [selectedRoom, setSelectedRoom] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
@@ -14,10 +12,8 @@ const FilterParameters = ({ filterData, setFilterData }) => {
   const { authTokens } = useContext(AuthContext);
 
   useEffect(() => {
-    // Функция для загрузки списка ответственных и помещений
     const fetchData = async () => {
       try {
-        // Загрузка списка ответственных
         const responsiblesResponse = await fetch('http://localhost:8000/api/responsibles/', {
           method: 'GET',
           headers: {
@@ -25,13 +21,12 @@ const FilterParameters = ({ filterData, setFilterData }) => {
             Authorization: 'Bearer ' + String(authTokens.access),
           },
         });
-  
+
         if (responsiblesResponse.ok) {
           const responsiblesData = await responsiblesResponse.json();
           setResponsibles(responsiblesData);
         }
-  
-        // Загрузка списка помещений
+
         const roomsResponse = await fetch('http://localhost:8000/api/rooms/', {
           method: 'GET',
           headers: {
@@ -39,7 +34,7 @@ const FilterParameters = ({ filterData, setFilterData }) => {
             Authorization: 'Bearer ' + String(authTokens.access),
           },
         });
-  
+
         if (roomsResponse.ok) {
           const roomsData = await roomsResponse.json();
           setRooms(roomsData);
@@ -48,10 +43,9 @@ const FilterParameters = ({ filterData, setFilterData }) => {
         console.error('Error fetching data:', error);
       }
     };
-  
-    // Вызываем функцию загрузки данных при первоначальной загрузке компонента
+
     fetchData();
-  }, []);
+  }, [authTokens.access]);
 
   const handleFilterChange = () => {
     const filters = {
@@ -59,14 +53,14 @@ const FilterParameters = ({ filterData, setFilterData }) => {
       room: selectedRoom,
       date: selectedDate,
     };
-    setFilterData(filters);
+    onFilterChange(filters);
   };
 
   const handleResetFilters = () => {
     setSelectedResponsible('');
     setSelectedRoom('');
     setSelectedDate('');
-    setFilterData({});
+    onResetFilters();
   };
 
   return (
@@ -78,7 +72,7 @@ const FilterParameters = ({ filterData, setFilterData }) => {
         <option value="">Выберите ответственного</option>
         {responsibles.map((responsible) => (
           <option key={responsible.id} value={responsible.id}>
-            {responsible}
+            {responsible.first_name} 
           </option>
         ))}
       </select>
@@ -90,7 +84,7 @@ const FilterParameters = ({ filterData, setFilterData }) => {
         <option value="">Выберите помещение</option>
         {rooms.map((room) => (
           <option key={room.id} value={room.id}>
-            {room}
+            {room.room_number} 
           </option>
         ))}
       </select>

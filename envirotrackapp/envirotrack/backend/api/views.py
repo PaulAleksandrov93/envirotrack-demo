@@ -57,13 +57,13 @@ def getEnviromentalParameters(request):
     serializer = EnvironmentalParametersSerializer(parameters, many=True, context={'request': request})
     return Response(serializer.data)
 
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def getEnviromentalParameter(request, pk):
-    parameters = EnviromentalParameters.objects.filter(id=pk).prefetch_related('room', 'responsible', 'measurement_instrument')
+    parameters = EnviromentalParameters.objects.get(id=pk)
     serializer = EnvironmentalParametersSerializer(parameters, many=False)
     return Response(serializer.data)
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
