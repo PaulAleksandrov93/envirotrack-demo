@@ -188,14 +188,14 @@ def get_current_user(request):
 
 
 @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])
 def filterEnvironmentalParameters(request):
-    
     responsible_id = request.query_params.get('responsible')
     room_id = request.query_params.get('room')
     date = request.query_params.get('date')
 
-    
+    print(f'responsible_id: {responsible_id}, room_id: {room_id}, date: {date}')
+
     filters = Q()
 
     if responsible_id:
@@ -203,11 +203,9 @@ def filterEnvironmentalParameters(request):
     if room_id:
         filters &= Q(room=room_id)
     if date:
-        filters &= Q(date_time=date)
+        filters &= Q(date_time__date=date)
 
-   
-    parameters = EnviromentalParameters.objects.filter(filters)
+    parameters = EnvironmentalParameters.objects.filter(filters)
 
-    
     serializer = EnvironmentalParametersSerializer(parameters, many=True)
     return Response(serializer.data)

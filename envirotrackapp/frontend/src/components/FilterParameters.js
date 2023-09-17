@@ -72,7 +72,7 @@ const FilterParameters = ({ onFilterChange, onResetFilters }) => {
         <option value="">Выберите ответственного</option>
         {responsibles.map((responsible) => (
           <option key={responsible.id} value={responsible.id}>
-            {responsible.first_name} 
+            {responsible.last_name} 
           </option>
         ))}
       </select>

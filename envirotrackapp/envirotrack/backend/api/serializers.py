@@ -44,8 +44,8 @@ class EnvironmentalParametersSerializer(serializers.ModelSerializer):
     room = RoomSelectSerializer()
     responsible = ResponsibleSerializer()
     measurement_instrument = MeasurementInstrumentSerializer()
-    created_by = serializers.StringRelatedField()  # Сериализатор для создавшего пользователя
-    modified_by = serializers.StringRelatedField()  # Сериализатор для изменившего пользователя
+    created_by = serializers.StringRelatedField()  
+    modified_by = serializers.StringRelatedField()  
 
     class Meta:
         model = EnviromentalParameters
