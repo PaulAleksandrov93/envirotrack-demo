@@ -121,3 +121,8 @@ class EnvironmentalParametersSerializer(serializers.ModelSerializer):
             **validated_data
         )
         return instance
+    
+class FilterParametersSerializer(serializers.Serializer):
+    responsible = serializers.IntegerField(required=False)
+    room = serializers.IntegerField(required=False)
+    date = serializers.DateField(required=False)

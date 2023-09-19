@@ -25,5 +25,6 @@ urlpatterns = [
     
     path('measurement_instruments/', views.getMeasurementInstruments, name='measurement-instruments-list'),
     path('parameters/filter/', views.filterEnvironmentalParameters, name='filter-environmental-parameters'),
+    
     path('responsibles/', views.getResponsibles, name='responsibles-list'),
 ]

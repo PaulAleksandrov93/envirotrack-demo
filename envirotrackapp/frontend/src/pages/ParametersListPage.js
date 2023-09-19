@@ -14,51 +14,20 @@ const ParametersListPage = () => {
     getParameters();
   }, [filterData]);
 
-  // const getParameters = async () => {
-  //   try {
-  //     const url = new URL('http://localhost:8000/api/parameters/filter/');
-  //     url.searchParams.append('responsible', filterData.responsible);
-  //     url.searchParams.append('room', filterData.room);
-  
-  //     if (filterData.date) {
-  //       url.searchParams.append('date', filterData.date);
-  //     }
-  
-  //     const response = await fetch(url.toString(), {
-  //       method: 'GET',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         Authorization: 'Bearer ' + String(authTokens.access),
-  //       },
-  //     });
-  //     const data = await response.json();
-  
-  //     console.log('Response:', response);
-  //     console.log('Data:', data);
-  
-  //     if (response.status === 200) {
-  //       setParameters(data);
-  //     } else if (response.status === 401) {
-  //       logoutUser();
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching parameters:', error);
-  //   }
-  // };
 
   const getParameters = async () => {
     try {
-      const url = new URL('http://localhost:8000/api/parameters/filter/');
+      const url = new URL('http://localhost:8000/api/parameters/');
   
-      if (filterData.responsible) {
+      if (filterData.responsible !== '') {
         url.searchParams.append('responsible', filterData.responsible);
       }
   
-      if (filterData.room) {
+      if (filterData.room !== '') {
         url.searchParams.append('room', filterData.room);
       }
   
-      if (filterData.date) {
+      if (filterData.date !== '') {
         url.searchParams.append('date', filterData.date);
       }
   

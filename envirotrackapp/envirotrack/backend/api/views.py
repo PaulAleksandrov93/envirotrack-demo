@@ -9,9 +9,10 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
+from datetime import datetime, timedelta
 
 from backend.models import Responsible, Room, EnviromentalParameters, MeasurementInstrument
-from .serializers import EnvironmentalParametersSerializer, RoomSelectSerializer, ResponsibleSerializer, MeasurementInstrumentSerializer
+from .serializers import EnvironmentalParametersSerializer, RoomSelectSerializer, ResponsibleSerializer, MeasurementInstrumentSerializer, FilterParametersSerializer
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -186,49 +187,29 @@ def get_current_user(request):
     else:
         return Response({'error': 'User not authenticated'}, status=401)
 
-
-# @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
-# def filterEnvironmentalParameters(request):
-#     responsible_id = request.query_params.get('responsible')
-#     room_id = request.query_params.get('room')
-#     date = request.query_params.get('date')
-
-#     print(f'responsible_id: {responsible_id}, room_id: {room_id}, date: {date}')
-
-#     filters = Q()
-
-#     if responsible_id:
-#         filters &= Q(responsible=responsible_id)
-#     if room_id:
-#         filters &= Q(room=room_id)
-#     if date:
-#         filters &= Q(date_time__date=date)
-
-#     parameters = EnvironmentalParameters.objects.filter(filters)
-
-#     serializer = EnvironmentalParametersSerializer(parameters, many=True)
-#     return Response(serializer.data)
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def filterEnvironmentalParameters(request):
-    responsible_id = request.query_params.get('responsible')
-    room_id = request.query_params.get('room')
-    date = request.query_params.get('date')
-
-    print(f'responsible_id: {responsible_id}, room_id: {room_id}, date: {date}')
-
+    responsible_id = request.GET.get('responsible')
+    room_id = request.GET.get('room')
+    date = request.GET.get('date')
+    print(responsible_id, room_id, date)
+    
     filters = Q()
 
-    if responsible_id:
-        filters &= Q(responsible=responsible_id)
-    if room_id:
-        filters &= Q(room=room_id)
-    if date:
-        filters &= Q(date_time__date=date)
+    if responsible_id is not None:
+        filters &= Q(responsible_id=responsible_id)
+    if room_id is not None:
+        filters &= Q(room_id=room_id)
+    if date is not None:
+        try:
+            date = datetime.strptime(date, "%Y-%m-%d")
+            start_date = date.replace(hour=0, minute=0, second=0)
+            end_date = date.replace(hour=23, minute=59, second=59)
+            filters &= Q(date_time__range=(start_date, end_date))
+        except ValueError:
+            return Response({'error': 'Invalid date format'}, status=400)
 
-    parameters = EnvironmentalParameters.objects.filter(filters)
-
+    parameters = EnviromentalParameters.objects.filter(filters)
     serializer = EnvironmentalParametersSerializer(parameters, many=True)
     return Response(serializer.data)
