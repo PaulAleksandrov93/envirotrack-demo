@@ -41,22 +41,28 @@ def getRoutes(request):
     return Response(routes)
 
 
-# @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
-# def getEnviromentalParameters(request):
-#     user = request.user
-#     parameters = EnviromentalParameters.objects.all()
-#     serializer = EnvironmentalParametersSerializer(parameters, many=True, context={'request': request})
-#     return Response(serializer.data)
-
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def getEnviromentalParameters(request):
     user = request.user
+    responsible = request.query_params.get('responsible')
+    room = request.query_params.get('room')
+    date = request.query_params.get('date')
+
     parameters = EnviromentalParameters.objects.all().prefetch_related('room', 'responsible', 'measurement_instrument')
+
+    if responsible:
+        parameters = parameters.filter(responsible=responsible)
+
+    if room:
+        parameters = parameters.filter(room=room)
+
+    if date:
+        parameters = parameters.filter(date_time=date)
+
     serializer = EnvironmentalParametersSerializer(parameters, many=True, context={'request': request})
     return Response(serializer.data)
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -187,29 +193,3 @@ def get_current_user(request):
     else:
         return Response({'error': 'User not authenticated'}, status=401)
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def filterEnvironmentalParameters(request):
-    responsible_id = request.GET.get('responsible')
-    room_id = request.GET.get('room')
-    date = request.GET.get('date')
-    print(responsible_id, room_id, date)
-    
-    filters = Q()
-
-    if responsible_id is not None:
-        filters &= Q(responsible_id=responsible_id)
-    if room_id is not None:
-        filters &= Q(room_id=room_id)
-    if date is not None:
-        try:
-            date = datetime.strptime(date, "%Y-%m-%d")
-            start_date = date.replace(hour=0, minute=0, second=0)
-            end_date = date.replace(hour=23, minute=59, second=59)
-            filters &= Q(date_time__range=(start_date, end_date))
-        except ValueError:
-            return Response({'error': 'Invalid date format'}, status=400)
-
-    parameters = EnviromentalParameters.objects.filter(filters)
-    serializer = EnvironmentalParametersSerializer(parameters, many=True)
-    return Response(serializer.data)

@@ -19,18 +19,17 @@ const ParametersListPage = () => {
     try {
       const url = new URL('http://localhost:8000/api/parameters/');
   
-      if (filterData.responsible !== '') {
+      if (filterData.responsible !== undefined && filterData.responsible !== '') {
         url.searchParams.append('responsible', filterData.responsible);
       }
-  
-      if (filterData.room !== '') {
+      
+      if (filterData.room !== undefined && filterData.room !== '') {
         url.searchParams.append('room', filterData.room);
       }
-  
-      if (filterData.date !== '') {
+      
+      if (filterData.date !== undefined && filterData.date !== '') {
         url.searchParams.append('date', filterData.date);
       }
-  
       const response = await fetch(url.toString(), {
         method: 'GET',
         headers: {
