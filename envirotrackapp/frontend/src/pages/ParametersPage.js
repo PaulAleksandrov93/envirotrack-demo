@@ -195,8 +195,27 @@ const ParameterPage = () => {
   };
 
   let handleChange = (field, value) => {
-    setParameter((prevParameter) => ({ ...prevParameter, [field]: value }));
+    if (field === 'pressure_kpa') {
+      const kpaValue = parseFloat(value);
+      const mmHgValue = Math.round(kpaValue * 7.50062 * 100) / 100; 
+      setParameter((prevParameter) => ({
+        ...prevParameter,
+        pressure_kpa: Math.round(kpaValue * 100) / 100, 
+        pressure_mmhg: mmHgValue,
+      }));
+    } else if (field === 'pressure_mmhg') {
+      const mmHgValue = parseFloat(value);
+      const kpaValue = Math.round((mmHgValue / 7.50062) * 100) / 100; 
+      setParameter((prevParameter) => ({
+        ...prevParameter,
+        pressure_kpa: kpaValue,
+        pressure_mmhg: Math.round(mmHgValue * 100) / 100, 
+      }));
+    } else {
+      setParameter((prevParameter) => ({ ...prevParameter, [field]: value }));
+    }
   };
+
   return (
     <div className='parameter'>
       <div className='parameter-header'>
