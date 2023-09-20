@@ -48,7 +48,7 @@ def getEnviromentalParameters(request):
     responsible = request.query_params.get('responsible')
     room = request.query_params.get('room')
     date = request.query_params.get('date')
-
+    print(f'date:{date}')
     parameters = EnviromentalParameters.objects.all().prefetch_related('room', 'responsible', 'measurement_instrument')
 
     if responsible:
@@ -58,7 +58,8 @@ def getEnviromentalParameters(request):
         parameters = parameters.filter(room=room)
 
     if date:
-        parameters = parameters.filter(date_time=date)
+        date = datetime.strptime(date, '%Y-%m-%d').date()
+        parameters = parameters.filter(date_time__date=date)
 
     serializer = EnvironmentalParametersSerializer(parameters, many=True, context={'request': request})
     return Response(serializer.data)
