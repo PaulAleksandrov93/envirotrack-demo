@@ -15,8 +15,8 @@ class Profession(models.Model):
 
 class Responsible(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, verbose_name='Пользователь')
-    first_name = models.CharField(max_length=50, verbose_name='Имя')
     last_name = models.CharField(max_length=50, verbose_name='Фамилия')
+    first_name = models.CharField(max_length=50, verbose_name='Имя')
     patronymic = models.CharField(max_length=50, verbose_name='Отчество')
     profession = models.ForeignKey(Profession, on_delete=models.SET_NULL, null=True, verbose_name='Профессия')
     
@@ -32,6 +32,7 @@ class Responsible(models.Model):
 class Room(models.Model):
     room_number = models.CharField(max_length=10, verbose_name='Номер помещения')
     responsible_persons = models.ManyToManyField(Responsible, related_name="rooms", verbose_name='Ответственный')
+    
 
     def __str__(self):
         return f'Помещение № {self.room_number}'

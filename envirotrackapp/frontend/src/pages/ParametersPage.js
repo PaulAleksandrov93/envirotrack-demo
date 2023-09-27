@@ -281,7 +281,7 @@ const ParameterPage = () => {
                 calibration_date: instrument.calibration_date,
                 calibration_interval: instrument.calibration_interval,
               }))}
-              value={parameter && parameter.measurement_instrument ? { // Добавлена проверка на существование parameter.measurement_instrument
+              value={parameter && parameter.measurement_instrument ? { 
                 value: parameter.measurement_instrument.id,
                 label: parameter.measurement_instrument.name,
                 type: parameter.measurement_instrument.type,
