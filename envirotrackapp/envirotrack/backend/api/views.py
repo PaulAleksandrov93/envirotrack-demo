@@ -61,6 +61,8 @@ def getEnviromentalParameters(request):
         date = datetime.strptime(date, '%Y-%m-%d').date()
         parameters = parameters.filter(date_time__date=date)
 
+    parameters = parameters.order_by('date_time')  # Добавляем сортировку по полю date_time
+    
     serializer = EnvironmentalParametersSerializer(parameters, many=True, context={'request': request})
     return Response(serializer.data)
 
