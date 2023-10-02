@@ -31,3 +31,20 @@ services:
     depends_on:
       - web-app 
     command: sh -c "npm start"
+
+  redis:
+    image: redis:7.0.5-alpine
+    hostname: redis
+
+  worker:
+    build:
+      context: .
+    hostname: worker
+    entrypoint: celery
+    command: -A celery_app.app worker --loglevel=info
+    volumes:
+      - ./envirotrack:/envirotrack
+    links:
+      - redis
+    depends_on:
+      - redis
