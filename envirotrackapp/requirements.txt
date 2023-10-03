@@ -5,3 +5,4 @@ djangorestframework-simplejwt==5.2.2
 psycopg2-binary==2.9.7
 django-debug-toolbar==4.2.0
 celery[redis]==5.2.7
+flower==1.2.0
