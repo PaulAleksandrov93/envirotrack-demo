@@ -1,7 +1,10 @@
 from rest_framework import serializers
-from backend.models import Responsible, Room, EnviromentalParameters, MeasurementInstrument
+from backend.models import Responsible, Room, EnviromentalParameters, MeasurementInstrument, ParameterSet
 
-
+class ParameterSetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ParameterSet
+        fields = '__all__'
 class ResponsibleSerializer(serializers.ModelSerializer):
     profession = serializers.StringRelatedField()
 
@@ -46,10 +49,11 @@ class EnvironmentalParametersSerializer(serializers.ModelSerializer):
     measurement_instrument = MeasurementInstrumentSerializer()
     created_by = serializers.StringRelatedField()  
     modified_by = serializers.StringRelatedField()  
+    parameter_sets = ParameterSetSerializer(many=True)  # Добавляем новый сериализатор
 
     class Meta:
         model = EnviromentalParameters
-        fields = ['id', 'room', 'temperature_celsius', 'humidity_percentage', 'pressure_kpa', 'pressure_mmhg', 'date_time', 'responsible', 'measurement_instrument', 'created_by', 'modified_by', 'created_at', 'modified_at']
+        fields = ['id', 'room', 'temperature_celsius', 'humidity_percentage', 'pressure_kpa', 'pressure_mmhg', 'date_time', 'responsible', 'measurement_instrument', 'created_by', 'modified_by', 'created_at', 'modified_at', 'parameter_sets']
 
     def update(self, instance, validated_data):
         room_data = validated_data.pop('room', None)
