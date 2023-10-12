@@ -57,12 +57,45 @@ class MeasurementInstrument(models.Model):
         verbose_name_plural = 'Средства измерения'
     
 
-class EnviromentalParameters(models.Model):
+class ParameterSet(models.Model):
     temperature_celsius = models.DecimalField(max_digits=5, decimal_places=2)
     humidity_percentage = models.DecimalField(max_digits=5, decimal_places=2)
     pressure_kpa = models.DecimalField(max_digits=7, decimal_places=2)
     pressure_mmhg = models.DecimalField(max_digits=7, decimal_places=2)
     date_time = models.DateTimeField()
+    measurement_instrument = models.ForeignKey(MeasurementInstrument, on_delete=models.CASCADE, null=True)
+
+    def __str__(self):
+        return f'{self.date_time}'
+
+    class Meta:
+        verbose_name = 'Набор параметров'
+        verbose_name_plural = 'Наборы параметров'
+
+# class EnviromentalParameters(models.Model):
+#     temperature_celsius = models.DecimalField(max_digits=5, decimal_places=2)
+#     humidity_percentage = models.DecimalField(max_digits=5, decimal_places=2)
+#     pressure_kpa = models.DecimalField(max_digits=7, decimal_places=2)
+#     pressure_mmhg = models.DecimalField(max_digits=7, decimal_places=2)
+#     date_time = models.DateTimeField()
+#     room = models.ForeignKey(Room, on_delete=models.CASCADE)
+#     responsible = models.ForeignKey(Responsible, related_name='environmental_parameters', on_delete=models.SET_NULL, null=True)
+#     measurement_instrument = models.ForeignKey(MeasurementInstrument, on_delete=models.CASCADE, null=True) 
+
+#     created_at = models.DateTimeField(auto_now_add=True, null=True)  # Дата и время создания
+#     created_by = models.ForeignKey(User, related_name='created_parameters', on_delete=models.SET_NULL, null=True)  # Кто создал
+#     modified_at = models.DateTimeField(auto_now=True, null=True)  # Дата и время последнего изменения
+#     modified_by = models.ForeignKey(User, related_name='modified_parameters', on_delete=models.SET_NULL, null=True)  # Кто изменил
+
+#     def __str__(self):
+#         return f'{self.room.room_number} - {self.date_time}'
+    
+#     class Meta:
+#         verbose_name = 'Параметры окружающей среды'
+#         verbose_name_plural = 'Параметры окружающей среды'
+
+
+class EnviromentalParameters(models.Model):
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
     responsible = models.ForeignKey(Responsible, related_name='environmental_parameters', on_delete=models.SET_NULL, null=True)
     measurement_instrument = models.ForeignKey(MeasurementInstrument, on_delete=models.CASCADE, null=True) 
@@ -72,10 +105,11 @@ class EnviromentalParameters(models.Model):
     modified_at = models.DateTimeField(auto_now=True, null=True)  # Дата и время последнего изменения
     modified_by = models.ForeignKey(User, related_name='modified_parameters', on_delete=models.SET_NULL, null=True)  # Кто изменил
 
+    parameter_sets = models.ManyToManyField(ParameterSet) # Добавляем связь
+
     def __str__(self):
-        return f'{self.room.room_number} - {self.date_time}'
-    
+        return f'{self.room.room_number} - {self.created_at}'
+
     class Meta:
         verbose_name = 'Параметры окружающей среды'
         verbose_name_plural = 'Параметры окружающей среды'
-
