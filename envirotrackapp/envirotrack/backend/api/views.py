@@ -17,8 +17,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from datetime import datetime, timedelta
 
-from backend.models import Responsible, Room, EnviromentalParameters, MeasurementInstrument
-from .serializers import EnvironmentalParametersSerializer, RoomSelectSerializer, ResponsibleSerializer, MeasurementInstrumentSerializer, FilterParametersSerializer
+from backend.models import Responsible, Room, EnviromentalParameters, MeasurementInstrument, ParameterSet
+from .serializers import EnvironmentalParametersSerializer, RoomSelectSerializer, ResponsibleSerializer, MeasurementInstrumentSerializer, FilterParametersSerializer, ParameterSetSerializer
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -263,3 +263,47 @@ def get_current_user(request):
     else:
         return Response({'error': 'User not authenticated'}, status=401)
 
+# ===
+
+@api_view(['GET'])
+def getParameterSets(request):
+    parameter_sets = ParameterSet.objects.all()
+    serializer = ParameterSetSerializer(parameter_sets, many=True, context={'request': request})
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def getParameterSet(request, pk):
+    parameter_set = ParameterSet.objects.get(id=pk)
+    serializer = ParameterSetSerializer(parameter_set, many=False)
+    return Response(serializer.data)
+
+@api_view(['POST'])
+def createParameterSet(request):
+    serializer = ParameterSetSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['PUT'])
+def updateParameterSet(request, pk):
+    try:
+        parameter_set = ParameterSet.objects.get(pk=pk)
+    except ParameterSet.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    serializer = ParameterSetSerializer(instance=parameter_set, data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['DELETE'])
+def deleteParameterSet(request, pk):
+    try:
+        parameter_set = ParameterSet.objects.get(pk=pk)
+    except ParameterSet.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    parameter_set.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
