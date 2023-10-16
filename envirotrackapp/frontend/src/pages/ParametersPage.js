@@ -14,7 +14,15 @@ const ParameterPage = () => {
   const { authTokens } = useContext(AuthContext);
   const [createdBy, setCreatedBy] = useState(null);
   const [modifiedBy, setModifiedBy] = useState(null);
-  
+  const [parameter, setParameter] = useState({
+    temperature_celsius: '',
+    humidity_percentage: '',
+    pressure_kpa: '',
+    pressure_mmhg: '',
+    date_time: '',
+    measurement_instrument: null,
+  });
+
   useEffect(() => {
     const getCurrentUser = async () => {
       try {
@@ -39,24 +47,27 @@ const ParameterPage = () => {
 
   const getParameter = useCallback(async () => {
     if (id === 'new') return;
-    let response = await fetch(
-      `/api/parameters/${id}/`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + String(authTokens.access),
-        },
-      }
-    );
-    let data = await response.json();
-    setParameter(data);
-    setSelectedRoom(data.room);
-    setCreatedBy(data.created_by);
-    setModifiedBy(data.modified_by);
-  }, [authTokens.access, id]);
 
-  let [parameter, setParameter] = useState(null);
+    try {
+      let response = await fetch(
+        `/api/parameters/${id}/`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + String(authTokens.access),
+          },
+        }
+      );
+      let data = await response.json();
+      setParameter(data);
+      setSelectedRoom(data.room);
+      setCreatedBy(data.created_by);
+      setModifiedBy(data.modified_by);
+    } catch (error) {
+      console.error('Error fetching parameter:', error);
+    }
+  }, [authTokens.access, id]);
 
   const getRooms = useCallback(async () => {
     try {
@@ -98,11 +109,11 @@ const ParameterPage = () => {
     getMeasurementInstruments();
   }, [getParameter, getRooms, getMeasurementInstruments]);
 
-    let createParameter = async () => {
+  const createParameter = async () => {
     if (currentUser) {
       const newParameter = {
         room: { room_number: selectedRoom.room_number },
-        measurement_instrument: { // Обновляем поле measurement_instrument
+        measurement_instrument: {
           name: parameter.measurement_instrument.name,
           type: parameter.measurement_instrument.type,
           serial_number: parameter.measurement_instrument.serial_number,
@@ -133,7 +144,6 @@ const ParameterPage = () => {
   
         if (response.ok) {
           console.log('Создана запись')
-          
           navigate('/');
         } else {
           console.error('Failed to create parameter:', response.statusText);
@@ -144,7 +154,7 @@ const ParameterPage = () => {
     }
   };
 
-  let updateParameter = async () => {
+  const updateParameter = async () => {
     try {
       const response = await fetch(`/api/parameters/update/${id}/`, {
         method: 'PUT',
@@ -157,7 +167,6 @@ const ParameterPage = () => {
 
       if (response.ok) {
         console.log('Запись успешно обновлена');
-        // Перенаправление на список параметров
         navigate('/'); 
       } else {
         console.error('Failed to update parameter:', response.statusText);
@@ -167,7 +176,7 @@ const ParameterPage = () => {
     }
   };
 
-  let deleteParameter = async () => {
+  const deleteParameter = async () => {
     if (parameter !== null) {
       try {
         const response = await fetch(`/api/parameters/delete/${id}/`, {
@@ -190,11 +199,11 @@ const ParameterPage = () => {
     }
   };
 
-  let handleSubmit = async () => {
+  const handleSubmit = () => {
     navigate('/');
   };
 
-  let handleChange = (field, value) => {
+  const handleChange = (field, value) => {
     if (field === 'pressure_kpa') {
       const kpaValue = parseFloat(value);
       const mmHgValue = Math.round(kpaValue * 7.50062 * 100) / 100; 
@@ -269,7 +278,7 @@ const ParameterPage = () => {
           </div>
         </div>
         <div className='right-column'>
-        <div className='parameter-field'>
+          <div className='parameter-field'>
             <label htmlFor='measurement_instrument'>Средство измерения:</label>
             <Select
               className="custom-select"

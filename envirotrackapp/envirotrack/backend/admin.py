@@ -1,10 +1,11 @@
 from django.contrib import admin
-from .models import Responsible, Room, EnviromentalParameters, Profession, MeasurementInstrument
+from .models import Responsible, Room, EnviromentalParameters, Profession, MeasurementInstrument, ParameterSet
 
 
 admin.site.register(Responsible)
 admin.site.register(EnviromentalParameters)
 admin.site.register(Profession)
+admin.site.register(ParameterSet)
 
 
 @admin.register(MeasurementInstrument)

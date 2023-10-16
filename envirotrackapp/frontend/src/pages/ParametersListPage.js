@@ -10,40 +10,27 @@ const ParametersListPage = () => {
   const [filterData, setFilterData] = useState({});
   const { authTokens, logoutUser } = useContext(AuthContext);
 
-  useEffect(() => {
-    getParameters();
-  }, [filterData]);
-
-
   const getParameters = async () => {
     try {
       const url = new URL('http://localhost:8000/api/parameters/');
-  
-      if (filterData.responsible !== undefined && filterData.responsible !== '') {
-        url.searchParams.append('responsible', filterData.responsible);
-      }
-      
-      if (filterData.room !== undefined && filterData.room !== '') {
-        url.searchParams.append('room', filterData.room);
-      }
-      
-      if (filterData.date !== undefined && filterData.date !== '') {
-        url.searchParams.append('date', filterData.date);
-      }
+      const searchParams = new URLSearchParams();
+
+      if (filterData.responsible) searchParams.append('responsible', filterData.responsible);
+      if (filterData.room) searchParams.append('room', filterData.room);
+      if (filterData.date) searchParams.append('date', filterData.date);
+
+      url.search = searchParams.toString();
+
       const response = await fetch(url.toString(), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + String(authTokens.access),
+          Authorization: `Bearer ${authTokens.access}`,
         },
       });
   
-      const data = await response.json();
-  
-      console.log('Response:', response);
-      console.log('Data:', data);
-  
-      if (response.status === 200) {
+      if (response.ok) {
+        const data = await response.json();
         setParameters(data);
       } else if (response.status === 401) {
         logoutUser();
@@ -53,12 +40,16 @@ const ParametersListPage = () => {
     }
   };
 
+  useEffect(() => {
+    getParameters();
+  }, [filterData, authTokens, logoutUser]);
+
   return (
     <div className='page-container'>
       <FilterParameters onFilterChange={setFilterData} onResetFilters={() => setFilterData({})} />
       <div className='parameters-list'>
-        {parameters.map((parameter, index) => (
-          <ListItem key={index} parameter={parameter} />
+        {parameters.map((parameter) => (
+          <ListItem key={parameter.id} parameter={parameter} />
         ))}
       </div>
       <AddButton />

@@ -32,5 +32,4 @@ urlpatterns = [
     path('parameter_sets/create/', views.createParameterSet, name='create-parameter-set'),
     path('parameter_sets/update/<str:pk>/', views.updateParameterSet, name='update-parameter-set'),
     path('parameter_sets/delete/<str:pk>/', views.deleteParameterSet, name='delete-parameter-set'),
-
 ]
