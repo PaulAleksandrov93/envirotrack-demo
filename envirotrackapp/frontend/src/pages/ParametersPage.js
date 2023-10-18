@@ -15,29 +15,26 @@ const ParameterPage = () => {
   const [createdBy, setCreatedBy] = useState(null);
   const [modifiedBy, setModifiedBy] = useState(null);
   const [parameter, setParameter] = useState({
-    temperature_celsius: '',
-    humidity_percentage: '',
-    pressure_kpa: '',
-    pressure_mmhg: '',
+    parameters: {
+      temperature_celsius: '',
+      humidity_percentage: '',
+      pressure_kpa: '',
+    },
     date_time: '',
-    measurement_instrument: null,
   });
 
   useEffect(() => {
     const getCurrentUser = async () => {
       try {
-        const response = await fetch(
-          '/api/current_user/',
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: 'Bearer ' + String(authTokens.access),
-            },
-          }
-        );
+        const response = await fetch('/api/current_user/', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + String(authTokens.access),
+          },
+        });
         const data = await response.json();
-        setCurrentUser(data); 
+        setCurrentUser(data);
       } catch (error) {
         console.error('Error fetching current user:', error);
       }
@@ -47,18 +44,14 @@ const ParameterPage = () => {
 
   const getParameter = useCallback(async () => {
     if (id === 'new') return;
-
     try {
-      let response = await fetch(
-        `/api/parameters/${id}/`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer ' + String(authTokens.access),
-          },
-        }
-      );
+      let response = await fetch(`/api/parameters/${id}/`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + String(authTokens.access),
+        },
+      });
       let data = await response.json();
       setParameter(data);
       setSelectedRoom(data.room);
@@ -71,15 +64,13 @@ const ParameterPage = () => {
 
   const getRooms = useCallback(async () => {
     try {
-      let response = await fetch(`/api/rooms/`,
-      {
+      let response = await fetch(`/api/rooms/`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           Authorization: 'Bearer ' + String(authTokens.access),
         },
-      }
-    );
+      });
       let data = await response.json();
       setRooms(data);
     } catch (error) {
@@ -109,7 +100,7 @@ const ParameterPage = () => {
     getMeasurementInstruments();
   }, [getParameter, getRooms, getMeasurementInstruments]);
 
-  const createParameter = async () => {
+  const createParameters = async () => {
     if (currentUser) {
       const newParameter = {
         room: { room_number: selectedRoom.room_number },
@@ -120,10 +111,9 @@ const ParameterPage = () => {
           calibration_date: parameter.measurement_instrument.calibration_date,
           calibration_interval: parameter.measurement_instrument.calibration_interval,
         },
-        temperature_celsius: parameter.temperature_celsius,
-        humidity_percentage: parameter.humidity_percentage,
-        pressure_kpa: parameter.pressure_kpa,
-        pressure_mmhg: parameter.pressure_mmhg,
+        temperature_celsius: parameter.morning_parameters.temperature_celsius,
+        humidity_percentage: parameter.morning_parameters.humidity_percentage,
+        pressure_kpa: parameter.morning_parameters.pressure_kpa,
         date_time: parameter.date_time,
         responsible: {
           id: currentUser.id,
@@ -141,9 +131,8 @@ const ParameterPage = () => {
           },
           body: JSON.stringify(newParameter),
         });
-  
         if (response.ok) {
-          console.log('Создана запись')
+          console.log('Создана запись');
           navigate('/');
         } else {
           console.error('Failed to create parameter:', response.statusText);
@@ -164,10 +153,9 @@ const ParameterPage = () => {
         },
         body: JSON.stringify(parameter),
       });
-
       if (response.ok) {
         console.log('Запись успешно обновлена');
-        navigate('/'); 
+        navigate('/');
       } else {
         console.error('Failed to update parameter:', response.statusText);
       }
@@ -187,7 +175,6 @@ const ParameterPage = () => {
           },
           body: JSON.stringify(parameter),
         });
-  
         if (!response.ok) {
           console.error('Failed to delete parameter:', response.statusText);
         } else {
@@ -206,19 +193,31 @@ const ParameterPage = () => {
   const handleChange = (field, value) => {
     if (field === 'pressure_kpa') {
       const kpaValue = parseFloat(value);
-      const mmHgValue = Math.round(kpaValue * 7.50062 * 100) / 100; 
+      const mmHgValue = Math.round(kpaValue * 7.50062 * 100) / 100;
       setParameter((prevParameter) => ({
         ...prevParameter,
-        pressure_kpa: Math.round(kpaValue * 100) / 100, 
-        pressure_mmhg: mmHgValue,
+        morning_parameters: {
+          ...prevParameter.morning_parameters,
+          pressure_kpa: Math.round(kpaValue * 100) / 100,
+        },
+        evening_parameters: {
+          ...prevParameter.evening_parameters,
+          pressure_kpa: Math.round(kpaValue * 100) / 100,
+        },
       }));
     } else if (field === 'pressure_mmhg') {
       const mmHgValue = parseFloat(value);
-      const kpaValue = Math.round((mmHgValue / 7.50062) * 100) / 100; 
+      const kpaValue = Math.round((mmHgValue / 7.50062) * 100) / 100;
       setParameter((prevParameter) => ({
         ...prevParameter,
-        pressure_kpa: kpaValue,
-        pressure_mmhg: Math.round(mmHgValue * 100) / 100, 
+        morning_parameters: {
+          ...prevParameter.morning_parameters,
+          pressure_kpa: kpaValue,
+        },
+        evening_parameters: {
+          ...prevParameter.evening_parameters,
+          pressure_kpa: kpaValue,
+        },
       }));
     } else {
       setParameter((prevParameter) => ({ ...prevParameter, [field]: value }));
@@ -234,7 +233,9 @@ const ParameterPage = () => {
             <button className="parameter-button-save" onClick={updateParameter}>Сохранить</button>
           </>
         ) : (
-          <button className="parameter-button-create" onClick={createParameter}>Создать</button>
+          <>
+            <button className="parameter-button-create" onClick={createParameters}>Добавить параметры</button>
+          </>
         )}
         <button className="parameter-button-back" onClick={handleSubmit}>Назад</button>
       </div>
@@ -245,8 +246,8 @@ const ParameterPage = () => {
             <input
               type='number'
               id='temperature_celsius'
-              value={parameter?.temperature_celsius || ''}
-              onChange={(e) => handleChange('temperature_celsius', e.target.value)}
+              value={parameter.morning_parameters.temperature_celsius}
+              onChange={(e) => handleChange('morning_parameters.temperature_celsius', e.target.value)}
             />
           </div>
           <div className='parameter-field'>
@@ -254,8 +255,8 @@ const ParameterPage = () => {
             <input
               type='number'
               id='humidity'
-              value={parameter?.humidity_percentage || ''}
-              onChange={(e) => handleChange('humidity_percentage', e.target.value)}
+              value={parameter.morning_parameters.humidity_percentage}
+              onChange={(e) => handleChange('morning_parameters.humidity_percentage', e.target.value)}
             />
           </div>
           <div className='parameter-field'>
@@ -263,8 +264,8 @@ const ParameterPage = () => {
             <input
               type='number'
               id='pressure_kpa'
-              value={parameter?.pressure_kpa || ''}
-              onChange={(e) => handleChange('pressure_kpa', e.target.value)}
+              value={parameter.morning_parameters.pressure_kpa}
+              onChange={(e) => handleChange('morning_parameters.pressure_kpa', e.target.value)}
             />
           </div>
           <div className='parameter-field'>
@@ -272,8 +273,8 @@ const ParameterPage = () => {
             <input
               type='number'
               id='pressure_mmhg'
-              value={parameter?.pressure_mmhg || ''}
-              onChange={(e) => handleChange('pressure_mmhg', e.target.value)}
+              value={parameter.evening_parameters.pressure_kpa}
+              onChange={(e) => handleChange('morning_parameters.pressure_mmhg', e.target.value)}
             />
           </div>
         </div>
@@ -329,7 +330,7 @@ const ParameterPage = () => {
             <input
               type='datetime-local'
               id='date_time'
-              value={parameter?.date_time ? parameter.date_time.slice(0, -1) : ''}
+              value={parameter.date_time ? parameter.date_time.slice(0, -1) : ''}
               onChange={(e) => handleChange('date_time', e.target.value + 'Z')}
             />
           </div>
@@ -350,4 +351,3 @@ const ParameterPage = () => {
 };
 
 export default ParameterPage;
-

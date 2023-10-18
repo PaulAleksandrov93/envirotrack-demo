@@ -126,99 +126,6 @@ def getResponsibles(request):
     serializer = ResponsibleSerializer(responsibles, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-# @api_view(['POST'])
-# @permission_classes([IsAuthenticated])
-# def createEnvironmentalParameters(request):
-#     """
-#     Создает новый набор параметров окружающей среды.
-
-#     Args:
-#         request (Request): Объект HTTP-запроса.
-
-#     Returns:
-#         Response: JSON-ответ, указывающий на успешное или неудачное выполнение операции.
-#     """    
-#     serializer = EnvironmentalParametersSerializer(data=request.data, context={'request': request})
-
-#     if serializer.is_valid():
-#         room_data = request.data.get('room')
-#         responsible_data = request.data.get('responsible')
-
-#         room = None
-#         if room_data:
-#             room, created = Room.objects.get_or_create(room_number=room_data.get('room_number'))
-
-#         responsible = None
-#         if responsible_data:
-#             responsible, created = Responsible.objects.get_or_create(
-#                 first_name=responsible_data.get('first_name'),
-#                 last_name=responsible_data.get('last_name'),
-#                 patronymic=responsible_data.get('patronymic')
-#             )
-
-        
-#         if request.user.is_authenticated:
-#             serializer.save(room=room, responsible=responsible, created_by=request.user)
-#         else:
-#             serializer.save(room=room, responsible=responsible)
-
-#         print("Data received on the server:", request.data)
-#         print("Created by:", serializer.instance.created_by)
-
-#         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
-    
-#     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-# @api_view(['PUT'])
-# @permission_classes([IsAuthenticated])
-# def updateEnvironmentalParameters(request, pk):
-#     """
-#     Обновляет существующий набор параметров окружающей среды.
-
-#     Args:
-#         request (Request): Объект HTTP-запроса.
-#         pk (int): Первичный ключ параметров окружающей среды.
-
-#     Returns:
-#         Response: JSON-ответ, указывающий на успешное или неудачное выполнение операции.
-#     """
-#     try:
-#         environmental_params = EnviromentalParameters.objects.select_related('room', 'responsible', 'measurement_instrument').get(pk=pk)
-#     except EnviromentalParameters.DoesNotExist:
-#         return Response(status=status.HTTP_404_NOT_FOUND)
-
-#     serializer = EnvironmentalParametersSerializer(instance=environmental_params, data=request.data, context={'request': request})
-
-#     if serializer.is_valid():
-#         if request.user.is_authenticated:
-#             serializer.save(modified_by=request.user)
-
-#         room_data = request.data.get('room')
-#         responsible_data = request.data.get('responsible')
-#         measurement_instrument_data = request.data.get('measurement_instrument')
-
-#         room, created = Room.objects.get_or_create(room_number=room_data.get('room_number')) if room_data else (None, False)
-#         responsible, created = Responsible.objects.get_or_create(
-#             first_name=responsible_data.get('first_name'),
-#             last_name=responsible_data.get('last_name'),
-#             patronymic=responsible_data.get('patronymic')
-#         ) if responsible_data else (None, False)
-#         measurement_instrument, created = MeasurementInstrument.objects.get_or_create(**measurement_instrument_data) if measurement_instrument_data else (None, False)
-
-#         environmental_params.room = room
-#         environmental_params.responsible = responsible
-#         environmental_params.measurement_instrument = measurement_instrument
-
-#         environmental_params.save()
-
-#         return Response(serializer.data)
-
-#     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-# ===
-
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -241,32 +148,40 @@ def createEnvironmentalParameters(request):
                 patronymic=responsible_data.get('patronymic')
             )
 
-        morning_parameter_data = request.data.get('morning_parameters')
-        evening_parameter_data = request.data.get('evening_parameters')
-
-        morning_parameter_set = None
-        if morning_parameter_data:
-            morning_parameter_set = ParameterSet.objects.create(**morning_parameter_data)
-
-        evening_parameter_set = None
-        if evening_parameter_data:
-            evening_parameter_set = ParameterSet.objects.create(**evening_parameter_data)
+        # Получаем данные о параметрах из запроса
+        parameter_sets_data = request.data.get('parameter_sets', [])
 
         if request.user.is_authenticated:
-            serializer.save(
-                room=room,
-                responsible=responsible,
-                created_by=request.user,
-                morning_parameter_set=morning_parameter_set,
-                evening_parameter_set=evening_parameter_set
-            )
+            for param_set_data in parameter_sets_data:
+                # Создаем набор параметров
+                parameter_set = ParameterSet.objects.create(
+                    temperature_celsius=param_set_data.get('temperature_celsius'),
+                    humidity_percentage=param_set_data.get('humidity_percentage'),
+                    pressure_kpa=param_set_data.get('pressure_kpa'),
+                    pressure_mmhg=param_set_data.get('pressure_mmhg'),
+                    date_time=param_set_data.get('date_time')
+                )
+                # Сохраняем связь с EnvironmentalParameters
+                environmental_params = serializer.save(
+                    room=room,
+                    responsible=responsible,
+                    created_by=request.user,
+                    parameter_set=parameter_set
+                )
         else:
-            serializer.save(
-                room=room,
-                responsible=responsible,
-                morning_parameter_set=morning_parameter_set,
-                evening_parameter_set=evening_parameter_set
-            )
+            for param_set_data in parameter_sets_data:
+                parameter_set = ParameterSet.objects.create(
+                    temperature_celsius=param_set_data.get('temperature_celsius'),
+                    humidity_percentage=param_set_data.get('humidity_percentage'),
+                    pressure_kpa=param_set_data.get('pressure_kpa'),
+                    pressure_mmhg=param_set_data.get('pressure_mmhg'),
+                    date_time=param_set_data.get('date_time')
+                )
+                environmental_params = serializer.save(
+                    room=room,
+                    responsible=responsible,
+                    parameter_set=parameter_set
+                )
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -279,7 +194,7 @@ def updateEnvironmentalParameters(request, pk):
     try:
         environmental_params = EnviromentalParameters.objects.select_related(
             'room', 'responsible', 'measurement_instrument',
-            'morning_parameter_set', 'evening_parameter_set'
+            'parameter_set'
         ).get(pk=pk)
     except EnviromentalParameters.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
@@ -293,8 +208,7 @@ def updateEnvironmentalParameters(request, pk):
         room_data = request.data.get('room')
         responsible_data = request.data.get('responsible')
         measurement_instrument_data = request.data.get('measurement_instrument')
-        morning_parameter_data = request.data.get('morning_parameters')
-        evening_parameter_data = request.data.get('evening_parameters')
+        parameter_sets_data = request.data.get('parameter_sets', [])
 
         room, created = Room.objects.get_or_create(room_number=room_data.get('room_number')) if room_data else (None, False)
         responsible, created = Responsible.objects.get_or_create(
@@ -304,23 +218,27 @@ def updateEnvironmentalParameters(request, pk):
         ) if responsible_data else (None, False)
         measurement_instrument, created = MeasurementInstrument.objects.get_or_create(**measurement_instrument_data) if measurement_instrument_data else (None, False)
 
-        morning_parameter_set = None
-        if morning_parameter_data:
-            if environmental_params.morning_parameter_set:
-                environmental_params.morning_parameter_set.delete()
-            morning_parameter_set = ParameterSet.objects.create(**morning_parameter_data)
+        parameter_sets = []
 
-        evening_parameter_set = None
-        if evening_parameter_data:
-            if environmental_params.evening_parameter_set:
-                environmental_params.evening_parameter_set.delete()
-            evening_parameter_set = ParameterSet.objects.create(**evening_parameter_data)
+        for param_set_data in parameter_sets_data:
+            parameter_set = ParameterSet.objects.create(
+                temperature_celsius=param_set_data.get('temperature_celsius'),
+                humidity_percentage=param_set_data.get('humidity_percentage'),
+                pressure_kpa=param_set_data.get('pressure_kpa'),
+                pressure_mmhg=param_set_data.get('pressure_mmhg'),
+                date_time=param_set_data.get('date_time')
+            )
+            parameter_sets.append(parameter_set)
 
         environmental_params.room = room
         environmental_params.responsible = responsible
         environmental_params.measurement_instrument = measurement_instrument
-        environmental_params.morning_parameter_set = morning_parameter_set
-        environmental_params.evening_parameter_set = evening_parameter_set
+
+        
+        environmental_params.parameter_set.all().delete()
+
+        
+        environmental_params.parameter_set.set(parameter_sets)
 
         environmental_params.save()
 
