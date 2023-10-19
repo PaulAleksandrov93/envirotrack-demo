@@ -14,12 +14,16 @@ const ParameterPage = () => {
   const { authTokens } = useContext(AuthContext);
   const [createdBy, setCreatedBy] = useState(null);
   const [modifiedBy, setModifiedBy] = useState(null);
-  const [parameter, setParameter] = useState({
-    parameters: {
+  const [parameterSets, setParameterSets] = useState([
+    {
       temperature_celsius: '',
       humidity_percentage: '',
       pressure_kpa: '',
-    },
+      pressure_mmhg: '',
+      date_time: '',
+    }
+  ]);
+  const [parameter, setParameter] = useState({
     date_time: '',
   });
 
@@ -100,45 +104,134 @@ const ParameterPage = () => {
     getMeasurementInstruments();
   }, [getParameter, getRooms, getMeasurementInstruments]);
 
+  const addParameterSet = () => {
+    setParameterSets([...parameterSets, { 
+      temperature_celsius: '',
+      humidity_percentage: '',
+      pressure_kpa: '',
+      pressure_mmhg: '',
+      date_time: '',
+    }]);
+  };
+
+  const handleParameterSetChange = (index, field, value) => {
+    const newParameterSets = [...parameterSets];
+    newParameterSets[index] = { ...newParameterSets[index], [field]: value };
+    setParameterSets(newParameterSets);
+  };
+
+  const renderParameterSets = () => {
+    return parameterSets.map((parameterSet, index) => (
+      <div key={index} className='parameter-set'>
+        <div className='left-column'>
+          <div className='parameter-field'>
+            <label htmlFor='temperature_celsius'>Температура, °C:</label>
+            <input
+              type='number'
+              value={parameterSet.temperature_celsius}
+              onChange={(e) => handleParameterSetChange(index, 'temperature_celsius', e.target.value)}
+            />
+          </div>
+          <div className='parameter-field'>
+            <label htmlFor='humidity_percentage'>Влажность, %:</label>
+            <input
+              type='number'
+              value={parameterSet.humidity_percentage}
+              onChange={(e) => handleParameterSetChange(index, 'humidity_percentage', e.target.value)}
+            />
+          </div>
+          <div className='parameter-field'>
+            <label htmlFor='pressure_kpa'>Давление, кПа:</label>
+            <input
+              type='number'
+              value={parameterSet.pressure_kpa}
+              onChange={(e) => handleParameterSetChange(index, 'pressure_kpa', e.target.value)}
+            />
+          </div>
+          <div className='parameter-field'>
+            <label htmlFor='pressure_mmhg'>Давление, ммРС:</label>
+            <input
+              type='number'
+              value={parameterSet.pressure_mmhg}
+              onChange={(e) => handleParameterSetChange(index, 'pressure_mmhg', e.target.value)}
+            />
+          </div>
+          <div className='parameter-field'>
+            <label htmlFor='date_time'>Дата и время:</label>
+            <input
+              type='datetime-local'
+              value={parameterSet.date_time ? parameterSet.date_time.slice(0, -1) : ''}
+              onChange={(e) => handleParameterSetChange(index, 'date_time', e.target.value + 'Z')}
+            />
+          </div>
+        </div>
+      </div>
+    ));
+  };
+
   const createParameters = async () => {
     if (currentUser) {
-      const newParameter = {
-        room: { room_number: selectedRoom.room_number },
-        measurement_instrument: {
-          name: parameter.measurement_instrument.name,
-          type: parameter.measurement_instrument.type,
-          serial_number: parameter.measurement_instrument.serial_number,
-          calibration_date: parameter.measurement_instrument.calibration_date,
-          calibration_interval: parameter.measurement_instrument.calibration_interval,
-        },
-        temperature_celsius: parameter.morning_parameters.temperature_celsius,
-        humidity_percentage: parameter.morning_parameters.humidity_percentage,
-        pressure_kpa: parameter.morning_parameters.pressure_kpa,
-        date_time: parameter.date_time,
-        responsible: {
-          id: currentUser.id,
-          first_name: currentUser.first_name,
-          last_name: currentUser.last_name,
-          patronymic: currentUser.patronymic,
-        },
-      };
+      const newParameterSets = parameterSets.map(set => ({
+        temperature_celsius: set.temperature_celsius,
+        humidity_percentage: set.humidity_percentage,
+        pressure_kpa: set.pressure_kpa,
+        pressure_mmhg: set.pressure_mmhg,
+        date_time: set.date_time,
+      }));
+
       try {
-        const response = await fetch('/api/parameters/create/', {
+        const responseSet = await fetch('/api/parameter_sets/create/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: 'Bearer ' + String(authTokens.access),
           },
-          body: JSON.stringify(newParameter),
+          body: JSON.stringify(newParameterSets),
         });
-        if (response.ok) {
-          console.log('Создана запись');
-          navigate('/');
+
+        if (responseSet.ok) {
+          console.log('Созданы наборы параметров');
+
+          const responseData = await responseSet.json();
+          const newParameters = responseData.map(id => ({
+            room: { room_number: selectedRoom.room_number },
+            measurement_instrument: {
+              name: parameter.measurement_instrument.name,
+              type: parameter.measurement_instrument.type,
+              serial_number: parameter.measurement_instrument.serial_number,
+              calibration_date: parameter.measurement_instrument.calibration_date,
+              calibration_interval: parameter.measurement_instrument.calibration_interval,
+            },
+            date_time: parameter.date_time,
+            responsible: {
+              id: currentUser.id,
+              first_name: currentUser.first_name,
+              last_name: currentUser.last_name,
+              patronymic: currentUser.patronymic,
+            },
+            parameter_set: id,
+          }));
+
+          const responseParameters = await fetch('/api/parameters/create/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: 'Bearer ' + String(authTokens.access),
+            },
+            body: JSON.stringify(newParameters),
+          });
+
+          if (responseParameters.ok) {
+            console.log('Созданы параметры');
+            navigate('/');
+          } else {
+            console.error('Failed to create parameters:', responseParameters.statusText);
+          }
         } else {
-          console.error('Failed to create parameter:', response.statusText);
+          console.error('Failed to create parameter sets:', responseSet.statusText);
         }
       } catch (error) {
-        console.error('Error while creating parameter:', error);
+        console.error('Error while creating parameter sets and parameters:', error);
       }
     }
   };
@@ -238,46 +331,12 @@ const ParameterPage = () => {
           </>
         )}
         <button className="parameter-button-back" onClick={handleSubmit}>Назад</button>
+        {id !== 'new' && (
+          <button className="parameter-button-create" onClick={addParameterSet}>Добавить набор параметров</button>
+        )}
       </div>
       <div className='parameter-fields'>
-        <div className='left-column'>
-          <div className='parameter-field'>
-            <label htmlFor='temperature_celsius'>Температура, °C:</label>
-            <input
-              type='number'
-              id='temperature_celsius'
-              value={parameter.morning_parameters.temperature_celsius}
-              onChange={(e) => handleChange('morning_parameters.temperature_celsius', e.target.value)}
-            />
-          </div>
-          <div className='parameter-field'>
-            <label htmlFor='humidity_percentage'>Влажность, %:</label>
-            <input
-              type='number'
-              id='humidity'
-              value={parameter.morning_parameters.humidity_percentage}
-              onChange={(e) => handleChange('morning_parameters.humidity_percentage', e.target.value)}
-            />
-          </div>
-          <div className='parameter-field'>
-            <label htmlFor='pressure_kpa'>Давление, кПа:</label>
-            <input
-              type='number'
-              id='pressure_kpa'
-              value={parameter.morning_parameters.pressure_kpa}
-              onChange={(e) => handleChange('morning_parameters.pressure_kpa', e.target.value)}
-            />
-          </div>
-          <div className='parameter-field'>
-            <label htmlFor='pressure_mmhg'>Давление, ммРС:</label>
-            <input
-              type='number'
-              id='pressure_mmhg'
-              value={parameter.evening_parameters.pressure_kpa}
-              onChange={(e) => handleChange('morning_parameters.pressure_mmhg', e.target.value)}
-            />
-          </div>
-        </div>
+        {renderParameterSets()}
         <div className='right-column'>
           <div className='parameter-field'>
             <label htmlFor='measurement_instrument'>Средство измерения:</label>
@@ -329,7 +388,6 @@ const ParameterPage = () => {
             <label htmlFor='date_time'>Дата и время:</label>
             <input
               type='datetime-local'
-              id='date_time'
               value={parameter.date_time ? parameter.date_time.slice(0, -1) : ''}
               onChange={(e) => handleChange('date_time', e.target.value + 'Z')}
             />
