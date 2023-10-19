@@ -316,6 +316,13 @@ const ParameterPage = () => {
       setParameter((prevParameter) => ({ ...prevParameter, [field]: value }));
     }
   };
+  const handleSave = async () => {
+    if (id === 'new') {
+      createParameters();
+    } else {
+      updateParameter();
+    }
+  };
 
   return (
     <div className='parameter'>
@@ -323,16 +330,16 @@ const ParameterPage = () => {
         {id !== 'new' ? (
           <>
             <button className="parameter-button-delete" onClick={deleteParameter}>Удалить</button>
-            <button className="parameter-button-save" onClick={updateParameter}>Сохранить</button>
+            <button className="parameter-button-save" onClick={handleSave}>Сохранить</button>
+            <button className="parameter-button-create" onClick={addParameterSet}>Добавить набор параметров</button>
+            <button className="parameter-button-back" onClick={handleSubmit}>Назад</button>
           </>
         ) : (
           <>
-            <button className="parameter-button-create" onClick={createParameters}>Добавить параметры</button>
+            <button className="parameter-button-create" onClick={handleSave}>Создать запись</button>
+            <button className="parameter-button-create" onClick={addParameterSet}>Добавить набор параметров</button>
+            <button className="parameter-button-back" onClick={handleSubmit}>Назад</button>
           </>
-        )}
-        <button className="parameter-button-back" onClick={handleSubmit}>Назад</button>
-        {id !== 'new' && (
-          <button className="parameter-button-create" onClick={addParameterSet}>Добавить набор параметров</button>
         )}
       </div>
       <div className='parameter-fields'>
