@@ -28,8 +28,8 @@ urlpatterns = [
     
     path('responsibles/', views.getResponsibles, name='responsibles-list'),
     path('parameter_sets/', views.getParameterSets, name='parameter-set-list'),  
-    path('parameter_sets/<str:pk>/', views.getParameterSet, name="parameter-set-detail"),
     path('parameter_sets/create/', views.createParameterSet, name='create-parameter-set'),
+    path('parameter_sets/<str:pk>/', views.getParameterSet, name="parameter-set-detail"),
     path('parameter_sets/update/<str:pk>/', views.updateParameterSet, name='update-parameter-set'),
     path('parameter_sets/delete/<str:pk>/', views.deleteParameterSet, name='delete-parameter-set'),
 ]

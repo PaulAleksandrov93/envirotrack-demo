@@ -82,7 +82,7 @@ class EnviromentalParameters(models.Model):
     modified_at = models.DateTimeField(auto_now=True, null=True)  # Дата и время последнего изменения
     modified_by = models.ForeignKey(User, related_name='modified_parameters', on_delete=models.SET_NULL, null=True)  # Кто изменил
 
-    parameter_set = models.ForeignKey(ParameterSet, on_delete=models.CASCADE, related_name='evening_parameters', null=True)
+    parameter_set = models.ForeignKey(ParameterSet, related_name='evening_parameters', null=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         return f'{self.room.room_number} - {self.created_at}'

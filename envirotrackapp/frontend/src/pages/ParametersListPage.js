@@ -10,27 +10,32 @@ const ParametersListPage = () => {
   const [filterData, setFilterData] = useState({});
   const { authTokens, logoutUser } = useContext(AuthContext);
 
+  useEffect(() => {
+    getParameters();
+  }, [filterData]);
+
   const getParameters = async () => {
     try {
+      // Формируем URL запроса с учетом фильтров
       const url = new URL('http://localhost:8000/api/parameters/');
-      const searchParams = new URLSearchParams();
-
-      if (filterData.responsible) searchParams.append('responsible', filterData.responsible);
-      if (filterData.room) searchParams.append('room', filterData.room);
-      if (filterData.date) searchParams.append('date', filterData.date);
-
-      url.search = searchParams.toString();
-
+      // url.searchParams.append('responsible', filterData.responsible);
+      // url.searchParams.append('room', filterData.room);
+      
+      // Добавляем фильтр по дате, если выбрана дата
+      if (filterData.date) {
+        url.searchParams.append('date', filterData.date);
+      }
+  
       const response = await fetch(url.toString(), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${authTokens.access}`,
+          Authorization: 'Bearer ' + String(authTokens.access),
         },
       });
+      const data = await response.json();
   
-      if (response.ok) {
-        const data = await response.json();
+      if (response.status === 200) {
         setParameters(data);
       } else if (response.status === 401) {
         logoutUser();
@@ -40,16 +45,12 @@ const ParametersListPage = () => {
     }
   };
 
-  useEffect(() => {
-    getParameters();
-  }, [filterData, authTokens, logoutUser]);
-
   return (
     <div className='page-container'>
       <FilterParameters onFilterChange={setFilterData} onResetFilters={() => setFilterData({})} />
       <div className='parameters-list'>
-        {parameters.map((parameter) => (
-          <ListItem key={parameter.id} parameter={parameter} />
+        {parameters.map((parameter, index) => (
+          <ListItem key={index} parameter={parameter} />
         ))}
       </div>
       <AddButton />

@@ -105,21 +105,42 @@ const ParameterPage = () => {
   }, [getParameter, getRooms, getMeasurementInstruments]);
 
   const addParameterSet = () => {
-    setParameterSets([...parameterSets, { 
-      temperature_celsius: '',
-      humidity_percentage: '',
-      pressure_kpa: '',
-      pressure_mmhg: '',
-      date_time: '',
-    }]);
+    if (currentUser) {
+      setParameterSets([...parameterSets, { 
+        temperature_celsius: '',
+        humidity_percentage: '',
+        pressure_kpa: '',
+        pressure_mmhg: '',
+        date_time: '',
+      }]);
+    } else {
+      console.error('User not authenticated');
+    }
   };
-
-  const handleParameterSetChange = (index, field, value) => {
-    const newParameterSets = [...parameterSets];
-    newParameterSets[index] = { ...newParameterSets[index], [field]: value };
-    setParameterSets(newParameterSets);
+  const updateParameterSet = (index, newSet) => {
+    setParameterSets(prevSets => {
+      const updatedSets = [...prevSets];
+      updatedSets[index] = newSet;
+      return updatedSets;
+    });
   };
-
+  const deleteLastParameterSet = () => {
+    if (currentUser) {
+      if (parameterSets.length > 1) {
+        const newParameterSets = parameterSets.slice(0, -1);
+        setParameterSets(newParameterSets);
+      }
+    } else {
+      console.error('User not authenticated');
+    }
+  };
+  const handleParameterSetChange = (index, key, value) => {
+    setParameterSets(prevSets => {
+      const updatedSets = [...prevSets];
+      updatedSets[index] = { ...updatedSets[index], [key]: value };
+      return updatedSets;
+    });
+  };
   const renderParameterSets = () => {
     return parameterSets.map((parameterSet, index) => (
       <div key={index} className='parameter-set'>
@@ -161,7 +182,7 @@ const ParameterPage = () => {
             <input
               type='datetime-local'
               value={parameterSet.date_time ? parameterSet.date_time.slice(0, -1) : ''}
-              onChange={(e) => handleParameterSetChange(index, 'date_time', e.target.value + 'Z')}
+              onChange={(e) => handleParameterSetChange(index, 'date_time', e.target.value + ':00Z')}
             />
           </div>
         </div>
@@ -326,18 +347,24 @@ const ParameterPage = () => {
 
   return (
     <div className='parameter'>
-      <div className='parameter-header'>
+            <div className='parameter-header'>
         {id !== 'new' ? (
           <>
             <button className="parameter-button-delete" onClick={deleteParameter}>Удалить</button>
             <button className="parameter-button-save" onClick={handleSave}>Сохранить</button>
             <button className="parameter-button-create" onClick={addParameterSet}>Добавить набор параметров</button>
+            <button className="parameter-button-create" onClick={deleteLastParameterSet} disabled={parameterSets.length === 1}>
+              Удалить набор параметров
+            </button>
             <button className="parameter-button-back" onClick={handleSubmit}>Назад</button>
           </>
         ) : (
           <>
             <button className="parameter-button-create" onClick={handleSave}>Создать запись</button>
             <button className="parameter-button-create" onClick={addParameterSet}>Добавить набор параметров</button>
+            <button className="parameter-button-create" onClick={deleteLastParameterSet} disabled={parameterSets.length === 1}>
+              Удалить набор параметров
+            </button>
             <button className="parameter-button-back" onClick={handleSubmit}>Назад</button>
           </>
         )}

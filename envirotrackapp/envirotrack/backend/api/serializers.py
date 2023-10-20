@@ -43,6 +43,7 @@ class ParameterSetSerializer(serializers.ModelSerializer):
     class Meta:
         model = ParameterSet
         fields = ['temperature_celsius', 'humidity_percentage', 'pressure_kpa', 'pressure_mmhg', 'date_time']
+        many = True 
 class EnvironmentalParametersSerializer(serializers.ModelSerializer):
     room = RoomSelectSerializer()
     responsible = ResponsibleSerializer()

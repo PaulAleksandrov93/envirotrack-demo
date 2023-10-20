@@ -9,7 +9,7 @@ const ListItem = ({ parameter }) => {
   };
 
   const renderParameterSets = (parameterSets) => {
-    if (!parameterSets || parameterSets.length === 0) return 'Прочерк';
+    if (!parameterSets || parameterSets.length === 0) return '-';
 
     return parameterSets.map((paramSet, index) => (
       <div key={index} className="parameter-set">
@@ -23,7 +23,7 @@ const ListItem = ({ parameter }) => {
   };
 
   return (
-    <Link to={`/parameters/${parameter.id}`}>
+    <Link to={`/parameter/${parameter.id}`}>
       <div className="parameters-list-item">
         <h3>Помещение: {parameter.room.room_number} | Ответственный: {parameter.responsible.first_name} {parameter.responsible.last_name}</h3>
         <div className="parameters">

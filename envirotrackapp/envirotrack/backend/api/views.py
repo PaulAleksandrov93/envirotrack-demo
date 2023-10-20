@@ -54,7 +54,7 @@ def getRoutes(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+# @permission_classes([IsAuthenticated])
 def getEnviromentalParameters(request):
     """
     Возвращает все записи с параметрами окружающей среды.
@@ -69,7 +69,7 @@ def getEnviromentalParameters(request):
     responsible = request.query_params.get('responsible')
     room = request.query_params.get('room')
     date = request.query_params.get('date')
-    print(f'date:{date}')
+    # print(f'date:{date}')
     parameters = EnviromentalParameters.objects.all().prefetch_related('room', 'responsible', 'measurement_instrument')
 
     if responsible:
@@ -131,7 +131,7 @@ def getResponsibles(request):
 @permission_classes([IsAuthenticated])
 def createEnvironmentalParameters(request):
     serializer = EnvironmentalParametersSerializer(data=request.data, context={'request': request})
-
+    print(request.data)
     if serializer.is_valid():
         room_data = request.data.get('room')
         responsible_data = request.data.get('responsible')
@@ -297,26 +297,32 @@ def get_current_user(request):
 # ===
 
 @api_view(['GET'])
+# @permission_classes([IsAuthenticated])
 def getParameterSets(request):
     parameter_sets = ParameterSet.objects.all()
     serializer = ParameterSetSerializer(parameter_sets, many=True, context={'request': request})
     return Response(serializer.data)
 
 @api_view(['GET'])
+# @permission_classes([IsAuthenticated])
 def getParameterSet(request, pk):
     parameter_set = ParameterSet.objects.get(id=pk)
     serializer = ParameterSetSerializer(parameter_set, many=False)
     return Response(serializer.data)
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def createParameterSet(request):
+    print(request.data)
     serializer = ParameterSetSerializer(data=request.data)
+    print(serializer.is_valid())
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def updateParameterSet(request, pk):
     try:
         parameter_set = ParameterSet.objects.get(pk=pk)
@@ -330,6 +336,7 @@ def updateParameterSet(request, pk):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def deleteParameterSet(request, pk):
     try:
         parameter_set = ParameterSet.objects.get(pk=pk)
