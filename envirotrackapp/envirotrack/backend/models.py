@@ -82,7 +82,7 @@ class EnviromentalParameters(models.Model):
     modified_at = models.DateTimeField(auto_now=True, null=True)  # Дата и время последнего изменения
     modified_by = models.ForeignKey(User, related_name='modified_parameters', on_delete=models.SET_NULL, null=True)  # Кто изменил
 
-    parameter_set = models.ForeignKey(ParameterSet, related_name='evening_parameters', null=True, on_delete=models.SET_NULL)
+    parameter_sets = models.ManyToManyField(ParameterSet, related_name='environmental_parameters', blank=True)
 
     def __str__(self):
         return f'{self.room.room_number} - {self.created_at}'

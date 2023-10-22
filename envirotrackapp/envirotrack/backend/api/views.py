@@ -194,7 +194,7 @@ def updateEnvironmentalParameters(request, pk):
     try:
         environmental_params = EnviromentalParameters.objects.select_related(
             'room', 'responsible', 'measurement_instrument',
-            'parameter_set'
+            'parameter_sets'
         ).get(pk=pk)
     except EnviromentalParameters.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)

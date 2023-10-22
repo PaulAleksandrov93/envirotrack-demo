@@ -42,20 +42,20 @@ class MeasurementInstrumentSerializer(serializers.ModelSerializer):
 class ParameterSetSerializer(serializers.ModelSerializer):
     class Meta:
         model = ParameterSet
-        fields = ['temperature_celsius', 'humidity_percentage', 'pressure_kpa', 'pressure_mmhg', 'date_time']
-        many = True 
+        fields = '__all__'
+        
 class EnvironmentalParametersSerializer(serializers.ModelSerializer):
     room = RoomSelectSerializer()
     responsible = ResponsibleSerializer()
     measurement_instrument = MeasurementInstrumentSerializer()
     created_by = serializers.StringRelatedField()  
     modified_by = serializers.StringRelatedField()  
-    parameter_set = ParameterSetSerializer()  
+    parameter_sets = ParameterSetSerializer(many=True)  # Используем новое поле parameter_sets
 
     class Meta:
         model = EnviromentalParameters
         fields = ['id', 'room', 'responsible', 'measurement_instrument', 'created_by', 'modified_by', 
-                  'created_at', 'modified_at', 'parameter_set']
+                  'created_at', 'modified_at', 'parameter_sets']
         
     def update(self, instance, validated_data):
         room_data = validated_data.pop('room', None)

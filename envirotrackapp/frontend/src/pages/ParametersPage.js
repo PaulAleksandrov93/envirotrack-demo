@@ -137,7 +137,7 @@ const ParameterPage = () => {
   const handleParameterSetChange = (index, key, value) => {
     setParameterSets(prevSets => {
       const updatedSets = [...prevSets];
-      updatedSets[index] = { ...updatedSets[index], [key]: value };
+      updatedSets[index] = { ...updatedSets[index], [key]: parseFloat(value) || '' }; // Преобразуем в число
       return updatedSets;
     });
   };
@@ -181,22 +181,40 @@ const ParameterPage = () => {
             <label htmlFor='date_time'>Дата и время:</label>
             <input
               type='datetime-local'
-              value={parameterSet.date_time ? parameterSet.date_time.slice(0, -1) : ''}
-              onChange={(e) => handleParameterSetChange(index, 'date_time', e.target.value + ':00Z')}
+              value={parameterSet.date_time ? parameterSet.date_time : ''}
+              onChange={(e) => handleParameterSetChange(index, 'date_time', e.target.value)}
             />
           </div>
         </div>
       </div>
     ));
   };
-
+  const updateParameterSets = async (updatedSets) => {
+    try {
+      const response = await fetch(`/api/parameter_sets/update/${id}/`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + String(authTokens.access),
+        },
+        body: JSON.stringify(updatedSets),
+      });
+      if (response.ok) {
+        console.log('Наборы параметров успешно обновлены');
+      } else {
+        console.error('Failed to update parameter sets:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error while updating parameter sets:', error);
+    }
+  };
   const createParameters = async () => {
     if (currentUser) {
       const newParameterSets = parameterSets.map(set => ({
-        temperature_celsius: set.temperature_celsius,
-        humidity_percentage: set.humidity_percentage,
-        pressure_kpa: set.pressure_kpa,
-        pressure_mmhg: set.pressure_mmhg,
+        temperature_celsius: parseFloat(set.temperature_celsius),
+        humidity_percentage: parseFloat(set.humidity_percentage),
+        pressure_kpa: parseFloat(set.pressure_kpa),
+        pressure_mmhg: parseFloat(set.pressure_mmhg),
         date_time: set.date_time,
       }));
 
@@ -269,7 +287,9 @@ const ParameterPage = () => {
       });
       if (response.ok) {
         console.log('Запись успешно обновлена');
-        navigate('/');
+        
+        // Обновление параметр сетов
+        await updateParameterSets(parameterSets);
       } else {
         console.error('Failed to update parameter:', response.statusText);
       }
@@ -307,32 +327,24 @@ const ParameterPage = () => {
   const handleChange = (field, value) => {
     if (field === 'pressure_kpa') {
       const kpaValue = parseFloat(value);
-      const mmHgValue = Math.round(kpaValue * 7.50062 * 100) / 100;
-      setParameter((prevParameter) => ({
-        ...prevParameter,
-        morning_parameters: {
-          ...prevParameter.morning_parameters,
+      if (!isNaN(kpaValue)) {
+        const mmHgValue = Math.round(kpaValue * 7.50062 * 100) / 100;
+        setParameter((prevParameter) => ({
+          ...prevParameter,
           pressure_kpa: Math.round(kpaValue * 100) / 100,
-        },
-        evening_parameters: {
-          ...prevParameter.evening_parameters,
-          pressure_kpa: Math.round(kpaValue * 100) / 100,
-        },
-      }));
+          pressure_mmhg: mmHgValue,
+        }));
+      }
     } else if (field === 'pressure_mmhg') {
       const mmHgValue = parseFloat(value);
-      const kpaValue = Math.round((mmHgValue / 7.50062) * 100) / 100;
-      setParameter((prevParameter) => ({
-        ...prevParameter,
-        morning_parameters: {
-          ...prevParameter.morning_parameters,
+      if (!isNaN(mmHgValue)) {
+        const kpaValue = Math.round((mmHgValue / 7.50062) * 100) / 100;
+        setParameter((prevParameter) => ({
+          ...prevParameter,
           pressure_kpa: kpaValue,
-        },
-        evening_parameters: {
-          ...prevParameter.evening_parameters,
-          pressure_kpa: kpaValue,
-        },
-      }));
+          pressure_mmhg: mmHgValue,
+        }));
+      }
     } else {
       setParameter((prevParameter) => ({ ...prevParameter, [field]: value }));
     }
@@ -341,7 +353,7 @@ const ParameterPage = () => {
     if (id === 'new') {
       createParameters();
     } else {
-      updateParameter();
+      await updateParameter();
     }
   };
 

@@ -29,6 +29,9 @@ const ListItem = ({ parameter }) => {
         <div className="parameters">
           {renderParameterSets(parameter.parameter_sets)}
           <div className="parameter-item">
+            <span>Дата и время:</span> {getTime(parameter.created_at)}
+          </div>
+          <div className="parameter-item">
             <span>Средство измерения:</span> {parameter.measurement_instrument ? parameter.measurement_instrument.name : 'Нет информации'}
           </div>
         </div>
