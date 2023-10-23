@@ -62,10 +62,10 @@ class ParameterSet(models.Model):
     humidity_percentage = models.DecimalField(max_digits=5, decimal_places=2)
     pressure_kpa = models.DecimalField(max_digits=7, decimal_places=2)
     pressure_mmhg = models.DecimalField(max_digits=7, decimal_places=2)
-    date_time = models.DateTimeField()
-    
+    time = models.TimeField()
+
     def __str__(self):
-        return f'{self.date_time}'
+        return f'Parameter Set {self.id}'
 
     class Meta:
         verbose_name = 'Набор параметров'

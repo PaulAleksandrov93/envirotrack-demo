@@ -97,12 +97,39 @@ const ParameterPage = () => {
       console.error('Error fetching measurement instruments:', error);
     }
   }, [authTokens.access]);
+  
 
+  // Функция для получения параметрсетов
+  const getParameterSets = useCallback(async () => {
+    if (id !== 'new') {
+      try {
+        const response = await fetch(`/api/parameter_sets/${id}/`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + String(authTokens.access),
+          },
+        });
+        const data = await response.json();
+  
+        // Проверяем, что data - это объект
+        if (typeof data === 'object' && data !== null) {
+          setParameterSets([data]); // Оборачиваем в массив
+        } else {
+          console.error('Ошибка: data не является объектом', data);
+        }
+      } catch (error) {
+        console.error('Error fetching parameter sets:', error);
+      }
+    }
+  }, [authTokens.access, id]);
+  
   useEffect(() => {
+    getParameterSets();
     getParameter();
     getRooms();
     getMeasurementInstruments();
-  }, [getParameter, getRooms, getMeasurementInstruments]);
+  }, [getParameterSets, getParameter, getRooms, getMeasurementInstruments]);
 
   const addParameterSet = () => {
     if (currentUser) {
@@ -117,11 +144,16 @@ const ParameterPage = () => {
       console.error('User not authenticated');
     }
   };
+
   const updateParameterSet = (index, newSet) => {
     setParameterSets(prevSets => {
-      const updatedSets = [...prevSets];
-      updatedSets[index] = newSet;
-      return updatedSets;
+      return prevSets.map((set, i) => {
+        if (i === index) {
+          return newSet;
+        } else {
+          return set;
+        }
+      });
     });
   };
   const deleteLastParameterSet = () => {
@@ -134,13 +166,21 @@ const ParameterPage = () => {
       console.error('User not authenticated');
     }
   };
+
   const handleParameterSetChange = (index, key, value) => {
     setParameterSets(prevSets => {
       const updatedSets = [...prevSets];
-      updatedSets[index] = { ...updatedSets[index], [key]: parseFloat(value) || '' }; // Преобразуем в число
+      updatedSets[index] = { ...updatedSets[index], [key]: parseFloat(value) || '' }; 
       return updatedSets;
     });
+
+    // Вызывает функцию updateParameterSet с передачей индекса и обновленного набора параметров
+    updateParameterSet(index, {
+      ...parameterSets[index],
+      [key]: parseFloat(value) || '',
+    });
   };
+
   const renderParameterSets = () => {
     return parameterSets.map((parameterSet, index) => (
       <div key={index} className='parameter-set'>
@@ -181,7 +221,7 @@ const ParameterPage = () => {
             <label htmlFor='date_time'>Дата и время:</label>
             <input
               type='datetime-local'
-              value={parameterSet.date_time ? parameterSet.date_time : ''}
+              value={parameterSet.date_time ? new Date(parameterSet.date_time).toISOString().slice(0, 16) : ''}
               onChange={(e) => handleParameterSetChange(index, 'date_time', e.target.value)}
             />
           </div>
@@ -189,25 +229,8 @@ const ParameterPage = () => {
       </div>
     ));
   };
-  const updateParameterSets = async (updatedSets) => {
-    try {
-      const response = await fetch(`/api/parameter_sets/update/${id}/`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + String(authTokens.access),
-        },
-        body: JSON.stringify(updatedSets),
-      });
-      if (response.ok) {
-        console.log('Наборы параметров успешно обновлены');
-      } else {
-        console.error('Failed to update parameter sets:', response.statusText);
-      }
-    } catch (error) {
-      console.error('Error while updating parameter sets:', error);
-    }
-  };
+
+
   const createParameters = async () => {
     if (currentUser) {
       const newParameterSets = parameterSets.map(set => ({
@@ -287,9 +310,11 @@ const ParameterPage = () => {
       });
       if (response.ok) {
         console.log('Запись успешно обновлена');
-        
+  
         // Обновление параметр сетов
-        await updateParameterSets(parameterSets);
+        for (let i = 0; i < parameterSets.length; i++) {
+          await updateParameterSet(i, parameterSets[i]);
+        }
       } else {
         console.error('Failed to update parameter:', response.statusText);
       }
