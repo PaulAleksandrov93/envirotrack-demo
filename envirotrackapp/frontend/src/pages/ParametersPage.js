@@ -4,6 +4,7 @@ import AuthContext from '../context/AuthContext';
 import Select from 'react-select';
 import './ParametersPage.css';
 
+
 const ParameterPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -61,6 +62,13 @@ const ParameterPage = () => {
       setSelectedRoom(data.room);
       setCreatedBy(data.created_by);
       setModifiedBy(data.modified_by);
+
+      // Убеждаемся, что параметрсеты существуют и являются массивом
+      if (Array.isArray(data.parameter_sets)) {
+        setParameterSets(data.parameter_sets);
+      } else {
+        console.error('Ошибка: parameter_sets не является массивом', data);
+      }
     } catch (error) {
       console.error('Error fetching parameter:', error);
     }
@@ -99,37 +107,36 @@ const ParameterPage = () => {
   }, [authTokens.access]);
   
 
-  // Функция для получения параметрсетов
-  const getParameterSets = useCallback(async () => {
-    if (id !== 'new') {
-      try {
-        const response = await fetch(`/api/parameter_sets/${id}/`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer ' + String(authTokens.access),
-          },
-        });
-        const data = await response.json();
+  // Функция для получения параметрсетов записи
+  // const getParameterSets = useCallback(async () => {
+  //   if (id !== 'new') {
+  //     try {
+  //       const response = await fetch(`/api/parameters/${id}/`, {
+  //         method: 'GET',
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //           Authorization: 'Bearer ' + String(authTokens.access),
+  //         },
+  //       });
+  //       const data = await response.json();
   
-        // Проверяем, что data - это объект
-        if (typeof data === 'object' && data !== null) {
-          setParameterSets([data]); // Оборачиваем в массив
-        } else {
-          console.error('Ошибка: data не является объектом', data);
-        }
-      } catch (error) {
-        console.error('Error fetching parameter sets:', error);
-      }
-    }
-  }, [authTokens.access, id]);
+  //       if (data.parameter_sets) {
+  //         setParameterSets(data.parameter_sets);
+  //       } else {
+  //         console.error('Ошибка: data не содержит parameter_sets', data);
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching parameter sets:', error);
+  //     }
+  //   }
+  // }, [authTokens.access, id]);
   
   useEffect(() => {
-    getParameterSets();
+    // getParameterSets();
     getParameter();
     getRooms();
     getMeasurementInstruments();
-  }, [getParameterSets, getParameter, getRooms, getMeasurementInstruments]);
+  }, [getParameter, getRooms, getMeasurementInstruments]);
 
   const addParameterSet = () => {
     if (currentUser) {
@@ -218,11 +225,11 @@ const ParameterPage = () => {
             />
           </div>
           <div className='parameter-field'>
-            <label htmlFor='date_time'>Дата и время:</label>
+            <label htmlFor='time'>Время:</label>
             <input
-              type='datetime-local'
-              value={parameterSet.date_time ? new Date(parameterSet.date_time).toISOString().slice(0, 16) : ''}
-              onChange={(e) => handleParameterSetChange(index, 'date_time', e.target.value)}
+              type='time'
+              value={parameterSet.time ? parameterSet.time : ''}
+              onChange={(e) => handleParameterSetChange(index, 'time', e.target.value)}
             />
           </div>
         </div>

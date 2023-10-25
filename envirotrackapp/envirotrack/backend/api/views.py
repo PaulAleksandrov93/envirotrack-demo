@@ -89,7 +89,7 @@ def getEnviromentalParameters(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+# @permission_classes([IsAuthenticated])
 def getEnviromentalParameter(request, pk):
     """
     Возвращает конкретную запись с параметрами окружающей среды.
@@ -127,61 +127,40 @@ def getResponsibles(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def createEnvironmentalParameters(request):
     serializer = EnvironmentalParametersSerializer(data=request.data, context={'request': request})
-    print(request.data)
     if serializer.is_valid():
         room_data = request.data.get('room')
         responsible_data = request.data.get('responsible')
 
-        room = None
-        if room_data:
-            room, created = Room.objects.get_or_create(room_number=room_data.get('room_number'))
+        room, created = Room.objects.get_or_create(room_number=room_data.get('room_number'))
 
-        responsible = None
-        if responsible_data:
-            responsible, created = Responsible.objects.get_or_create(
-                first_name=responsible_data.get('first_name'),
-                last_name=responsible_data.get('last_name'),
-                patronymic=responsible_data.get('patronymic')
-            )
+        responsible, created = Responsible.objects.get_or_create(
+            first_name=responsible_data.get('first_name'),
+            last_name=responsible_data.get('last_name'),
+            patronymic=responsible_data.get('patronymic')
+        )
 
-        # Получаем данные о параметрах из запроса
         parameter_sets_data = request.data.get('parameter_sets', [])
 
-        if request.user.is_authenticated:
-            for param_set_data in parameter_sets_data:
-                # Создаем набор параметров
-                parameter_set = ParameterSet.objects.create(
-                    temperature_celsius=param_set_data.get('temperature_celsius'),
-                    humidity_percentage=param_set_data.get('humidity_percentage'),
-                    pressure_kpa=param_set_data.get('pressure_kpa'),
-                    pressure_mmhg=param_set_data.get('pressure_mmhg'),
-                    date_time=param_set_data.get('date_time')
-                )
-                # Сохраняем связь с EnvironmentalParameters
-                environmental_params = serializer.save(
-                    room=room,
-                    responsible=responsible,
-                    created_by=request.user,
-                    parameter_set=parameter_set
-                )
-        else:
-            for param_set_data in parameter_sets_data:
-                parameter_set = ParameterSet.objects.create(
-                    temperature_celsius=param_set_data.get('temperature_celsius'),
-                    humidity_percentage=param_set_data.get('humidity_percentage'),
-                    pressure_kpa=param_set_data.get('pressure_kpa'),
-                    pressure_mmhg=param_set_data.get('pressure_mmhg'),
-                    date_time=param_set_data.get('date_time')
-                )
-                environmental_params = serializer.save(
-                    room=room,
-                    responsible=responsible,
-                    parameter_set=parameter_set
-                )
+        for param_set_data in parameter_sets_data:
+            parameter_set = ParameterSet.objects.create(
+                temperature_celsius=param_set_data.get('temperature_celsius'),
+                humidity_percentage=param_set_data.get('humidity_percentage'),
+                pressure_kpa=param_set_data.get('pressure_kpa'),
+                pressure_mmhg=param_set_data.get('pressure_mmhg'),
+                time=param_set_data.get('time')  # Исправлено: date_time -> time
+            )
+
+            serializer.save(
+                room=room,
+                responsible=responsible,
+                created_by=request.user,
+            )
+            serializer.instance.parameter_sets.add(parameter_set)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -192,10 +171,7 @@ def createEnvironmentalParameters(request):
 @permission_classes([IsAuthenticated])
 def updateEnvironmentalParameters(request, pk):
     try:
-        environmental_params = EnviromentalParameters.objects.select_related(
-            'room', 'responsible', 'measurement_instrument',
-            'parameter_sets'
-        ).get(pk=pk)
+        environmental_params = EnviromentalParameters.objects.get(pk=pk)
     except EnviromentalParameters.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -226,7 +202,7 @@ def updateEnvironmentalParameters(request, pk):
                 humidity_percentage=param_set_data.get('humidity_percentage'),
                 pressure_kpa=param_set_data.get('pressure_kpa'),
                 pressure_mmhg=param_set_data.get('pressure_mmhg'),
-                date_time=param_set_data.get('date_time')
+                time=param_set_data.get('time')  # Исправлено: date_time -> time
             )
             parameter_sets.append(parameter_set)
 
@@ -234,10 +210,6 @@ def updateEnvironmentalParameters(request, pk):
         environmental_params.responsible = responsible
         environmental_params.measurement_instrument = measurement_instrument
 
-        
-        environmental_params.parameter_set.all().delete()
-
-        
         environmental_params.parameter_set.set(parameter_sets)
 
         environmental_params.save()
@@ -245,6 +217,7 @@ def updateEnvironmentalParameters(request, pk):
         return Response(serializer.data)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 # ===
 
