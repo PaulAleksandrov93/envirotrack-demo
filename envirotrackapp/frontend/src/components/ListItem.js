@@ -17,7 +17,7 @@ const ListItem = ({ parameter }) => {
         <div>Влажность (%): {paramSet.humidity_percentage}</div>
         <div>Давление (кПа): {paramSet.pressure_kpa}</div>
         <div>Давление (мм рт. ст.): {paramSet.pressure_mmhg}</div>
-        <div>Дата и время: {getTime(paramSet.date_time)}</div>
+        <div>Время создания: {paramSet.time}</div>
       </div>
     ));
   };

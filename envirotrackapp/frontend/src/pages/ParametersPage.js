@@ -357,28 +357,34 @@ const ParameterPage = () => {
   };
 
   const handleChange = (field, value) => {
-    if (field === 'pressure_kpa') {
-      const kpaValue = parseFloat(value);
-      if (!isNaN(kpaValue)) {
-        const mmHgValue = Math.round(kpaValue * 7.50062 * 100) / 100;
-        setParameter((prevParameter) => ({
-          ...prevParameter,
-          pressure_kpa: Math.round(kpaValue * 100) / 100,
-          pressure_mmhg: mmHgValue,
-        }));
-      }
-    } else if (field === 'pressure_mmhg') {
-      const mmHgValue = parseFloat(value);
-      if (!isNaN(mmHgValue)) {
-        const kpaValue = Math.round((mmHgValue / 7.50062) * 100) / 100;
-        setParameter((prevParameter) => ({
-          ...prevParameter,
-          pressure_kpa: kpaValue,
-          pressure_mmhg: mmHgValue,
-        }));
-      }
-    } else {
-      setParameter((prevParameter) => ({ ...prevParameter, [field]: value }));
+    switch (field) {
+      case 'pressure_kpa':
+        const kpaValue = parseFloat(value);
+        if (!isNaN(kpaValue)) {
+          const mmHgValue = Math.round(kpaValue * 7.50062 * 100) / 100;
+          setParameter((prevParameter) => ({
+            ...prevParameter,
+            pressure_kpa: Math.round(kpaValue * 100) / 100,
+            pressure_mmhg: mmHgValue,
+          }));
+        }
+        break;
+  
+      case 'pressure_mmhg':
+        const mmHgValue = parseFloat(value);
+        if (!isNaN(mmHgValue)) {
+          const kpaValue = Math.round((mmHgValue / 7.50062) * 100) / 100;
+          setParameter((prevParameter) => ({
+            ...prevParameter,
+            pressure_kpa: kpaValue,
+            pressure_mmhg: mmHgValue,
+          }));
+        }
+        break;
+  
+      default:
+        setParameter((prevParameter) => ({ ...prevParameter, [field]: value }));
+        break;
     }
   };
   const handleSave = async () => {
@@ -463,11 +469,19 @@ const ParameterPage = () => {
             />
           </div>
           <div className='parameter-field'>
-            <label htmlFor='date_time'>Дата и время:</label>
+            <label htmlFor='created_at'>Дата и время:</label>
             <input
               type='datetime-local'
-              value={parameter.date_time ? parameter.date_time.slice(0, -1) : ''}
-              onChange={(e) => handleChange('date_time', e.target.value + 'Z')}
+              id='created_at'
+              value={
+                parameter?.created_at
+                  ? parameter.created_at.slice(0, 16) // Обрезаем миллисекунды
+                  : parameter?.date_time
+                  ? parameter.date_time.slice(0, 16) // Обрезаем миллисекунды
+                  : ''
+              }
+              onChange={(e) => handleChange('created_at', e.target.value + 'Z')}
+              disabled
             />
           </div>
           <div className='parameter-fields-1'>
