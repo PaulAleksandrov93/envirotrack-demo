@@ -127,44 +127,68 @@ def getResponsibles(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def createEnvironmentalParameters(request):
-    serializer = EnvironmentalParametersSerializer(data=request.data, context={'request': request})
-    if serializer.is_valid():
-        room_data = request.data.get('room')
-        responsible_data = request.data.get('responsible')
+    print("Запрос:", request.data)
+    parameter_sets_data = request.data.get('parameter_sets', [])
+    parameter_set_ids = []
 
-        room, created = Room.objects.get_or_create(room_number=room_data.get('room_number'))
+    for param_set_data in parameter_sets_data:
+        print(f"param_set_data: {param_set_data}")  # Отладочный вывод
+        parameter_set_id = param_set_data.get('id')
+        print(f"Получен parameter_set_id: {parameter_set_id}")
 
-        responsible, created = Responsible.objects.get_or_create(
-            first_name=responsible_data.get('first_name'),
-            last_name=responsible_data.get('last_name'),
-            patronymic=responsible_data.get('patronymic')
-        )
+        if parameter_set_id:
+            try:
+                parameter_set = ParameterSet.objects.get(id=parameter_set_id)
+                parameter_set_ids.append(parameter_set.id)
+                print(f"Найден ParameterSet с id {parameter_set.id}")  # Отладочный вывод
+            except ParameterSet.DoesNotExist:
+                return Response({'error': f'ParameterSet with id {parameter_set_id} does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            serializer = ParameterSetSerializer(data=param_set_data)
+            if serializer.is_valid():
+                parameter_set = serializer.save()
+                parameter_set_ids.append(parameter_set.id)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        parameter_sets_data = request.data.get('parameter_sets', [])
+    room_data = request.data.get('room')
+    responsible_data = request.data.get('responsible')
+    measurement_instrument_data = request.data.get('measurement_instrument')
 
-        for param_set_data in parameter_sets_data:
-            parameter_set = ParameterSet.objects.create(
-                temperature_celsius=param_set_data.get('temperature_celsius'),
-                humidity_percentage=param_set_data.get('humidity_percentage'),
-                pressure_kpa=param_set_data.get('pressure_kpa'),
-                pressure_mmhg=param_set_data.get('pressure_mmhg'),
-                time=param_set_data.get('time')  # Исправлено: date_time -> time
-            )
+    room, created = Room.objects.get_or_create(room_number=room_data.get('room_number'))
+    print(f"Найдена комната с номером {room.room_number}")  # Отладочный вывод
 
-            serializer.save(
-                room=room,
-                responsible=responsible,
-                created_by=request.user,
-            )
-            serializer.instance.parameter_sets.add(parameter_set)
+    responsible, created = Responsible.objects.get_or_create(
+        first_name=responsible_data.get('first_name'),
+        last_name=responsible_data.get('last_name'),
+        patronymic=responsible_data.get('patronymic')
+    )
+    print(f"Найден ответственный: {responsible.first_name} {responsible.last_name} {responsible.patronymic}")  # Отладочный вывод
 
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    measurement_instrument, created = MeasurementInstrument.objects.get_or_create(
+        serial_number=measurement_instrument_data.get('serial_number'),
+        defaults=measurement_instrument_data
+    )
+    print(f"Найден прибор с серийным номером {measurement_instrument.serial_number}")  # Отладочный вывод
 
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    data = {
+        'room': room_data,
+        'responsible': responsible_data,
+        'measurement_instrument': measurement_instrument_data,
+        'parameter_sets': parameter_sets_data,
+    }
+
+    new_serializer = EnvironmentalParametersSerializer(data=data, context={'request': request})
+    if new_serializer.is_valid():
+        new_serializer.save()
+        print(f"Создана запись с id {new_serializer.data.get('id')}")  # Отладочный вывод
+        return Response(new_serializer.data, status=status.HTTP_201_CREATED)
+    else:
+        print(f"Ошибка создания записи: {new_serializer.errors}")  # Отладочный вывод
+        return Response(new_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['PUT'])
@@ -287,12 +311,33 @@ def getParameterSet(request, pk):
 @permission_classes([IsAuthenticated])
 def createParameterSet(request):
     print(request.data)
-    serializer = ParameterSetSerializer(data=request.data)
-    print(serializer.is_valid())
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Преобразовать время в формат 'HH:MM:SS'
+    time_str = request.data.get('time')
+    if time_str:
+        try:
+            datetime.strptime(time_str, '%H:%M:%S')
+        except ValueError:
+            return Response({'error': 'Invalid time format'}, status=status.HTTP_400_BAD_REQUEST)
+
+    data = request.data
+    if isinstance(data, list):
+        created_sets = []
+        for item in data:
+            serializer = ParameterSetSerializer(data=item)
+            print(serializer.is_valid())
+            if serializer.is_valid():
+                parameter_set = serializer.save()
+                created_sets.append(parameter_set)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(ParameterSetSerializer(created_sets, many=True).data, status=status.HTTP_201_CREATED)
+    else:
+        serializer = ParameterSetSerializer(data=data)
+        if serializer.is_valid():
+            parameter_set = serializer.save()
+            return Response(ParameterSetSerializer(parameter_set).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])

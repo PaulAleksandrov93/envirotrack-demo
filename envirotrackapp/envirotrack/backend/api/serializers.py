@@ -54,8 +54,7 @@ class EnvironmentalParametersSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EnviromentalParameters
-        fields = ['id', 'room', 'responsible', 'measurement_instrument', 'created_by', 'modified_by', 
-                  'created_at', 'modified_at', 'parameter_sets']
+        fields = '__all__'
         
     def update(self, instance, validated_data):
         room_data = validated_data.pop('room', None)
@@ -83,15 +82,33 @@ class EnvironmentalParametersSerializer(serializers.ModelSerializer):
             )
             instance.measurement_instrument = measurement_instrument
 
-        # Добавляем обновление информации о пользователе, изменившем запись
         if self.context['request'].user.is_authenticated:
             instance.modified_by = self.context['request'].user
 
-        instance.temperature_celsius = validated_data.get('temperature_celsius', instance.temperature_celsius)
-        instance.humidity_percentage = validated_data.get('humidity_percentage', instance.humidity_percentage)
-        instance.pressure_kpa = validated_data.get('pressure_kpa', instance.pressure_kpa)
-        instance.pressure_mmhg = validated_data.get('pressure_mmhg', instance.pressure_mmhg)
-        instance.date_time = validated_data.get('date_time', instance.date_time)
+        # Операции с параметрсетами
+        parameter_sets_data = validated_data.pop('parameter_sets', [])
+
+        # Удаляем все связи с параметрсетами
+        instance.parameter_sets.clear()
+
+        for param_set_data in parameter_sets_data:
+            parameter_set_id = param_set_data.get('id')
+            print(f"Получен parameter_set_id: {parameter_set_id}")  # Отладочный вывод
+
+            if parameter_set_id:
+                try:
+                    parameter_set = ParameterSet.objects.get(id=parameter_set_id)
+                except ParameterSet.DoesNotExist:
+                    return Response({'error': f'ParameterSet with id {parameter_set_id} does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                serializer = ParameterSetSerializer(data=param_set_data)
+                if serializer.is_valid():
+                    parameter_set = serializer.save()
+                else:
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            instance.parameter_sets.add(parameter_set)
+
         instance.save()
 
         return instance
@@ -103,13 +120,13 @@ class EnvironmentalParametersSerializer(serializers.ModelSerializer):
 
         room = None
         if room_data:
-            room, created = Room.objects.get_or_create(room_number=room_data.room_number)
+            room, created = Room.objects.get_or_create(room_number=room_data.get('room_number'))
 
         responsible = None
         if responsible_data:
             responsible, created = Responsible.objects.get_or_create(
-                first_name=responsible_data.first_name,
-                last_name=responsible_data.last_name
+                first_name=responsible_data.get('first_name'),
+                last_name=responsible_data.get('last_name')
             )
 
         measurement_instrument = None
@@ -118,9 +135,11 @@ class EnvironmentalParametersSerializer(serializers.ModelSerializer):
                 **measurement_instrument_data
             )
 
-        # Добавляем информацию о пользователе, создавшем запись
         if self.context['request'].user.is_authenticated:
             validated_data['created_by'] = self.context['request'].user
+
+        # Операции с параметрсетами
+        parameter_sets_data = validated_data.pop('parameter_sets', [])
 
         instance = EnviromentalParameters.objects.create(
             room=room,
@@ -128,6 +147,15 @@ class EnvironmentalParametersSerializer(serializers.ModelSerializer):
             measurement_instrument=measurement_instrument,
             **validated_data
         )
+
+        for param_set_data in parameter_sets_data:
+            serializer = ParameterSetSerializer(data=param_set_data)
+            if serializer.is_valid():
+                parameter_set = serializer.save()
+                instance.parameter_sets.add(parameter_set)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
         return instance
     
 class FilterParametersSerializer(serializers.Serializer):

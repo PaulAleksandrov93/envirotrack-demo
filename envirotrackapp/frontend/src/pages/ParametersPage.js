@@ -21,12 +21,10 @@ const ParameterPage = () => {
       humidity_percentage: '',
       pressure_kpa: '',
       pressure_mmhg: '',
-      date_time: '',
+      time: '',
     }
   ]);
-  const [parameter, setParameter] = useState({
-    date_time: '',
-  });
+  const [parameter, setParameter] = useState({});
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -105,48 +103,27 @@ const ParameterPage = () => {
       console.error('Error fetching measurement instruments:', error);
     }
   }, [authTokens.access]);
-  
-
-  // Функция для получения параметрсетов записи
-  // const getParameterSets = useCallback(async () => {
-  //   if (id !== 'new') {
-  //     try {
-  //       const response = await fetch(`/api/parameters/${id}/`, {
-  //         method: 'GET',
-  //         headers: {
-  //           'Content-Type': 'application/json',
-  //           Authorization: 'Bearer ' + String(authTokens.access),
-  //         },
-  //       });
-  //       const data = await response.json();
-  
-  //       if (data.parameter_sets) {
-  //         setParameterSets(data.parameter_sets);
-  //       } else {
-  //         console.error('Ошибка: data не содержит parameter_sets', data);
-  //       }
-  //     } catch (error) {
-  //       console.error('Error fetching parameter sets:', error);
-  //     }
-  //   }
-  // }, [authTokens.access, id]);
+ 
   
   useEffect(() => {
-    // getParameterSets();
     getParameter();
     getRooms();
     getMeasurementInstruments();
   }, [getParameter, getRooms, getMeasurementInstruments]);
 
+
   const addParameterSet = () => {
     if (currentUser) {
-      setParameterSets([...parameterSets, { 
-        temperature_celsius: '',
-        humidity_percentage: '',
-        pressure_kpa: '',
-        pressure_mmhg: '',
-        date_time: '',
-      }]);
+      setParameterSets(prevSets => {
+        const newSet = { 
+          temperature_celsius: '',
+          humidity_percentage: '',
+          pressure_kpa: '',
+          pressure_mmhg: '',
+          time: '',
+        };
+        return [...prevSets, newSet];
+      });
     } else {
       console.error('User not authenticated');
     }
@@ -177,14 +154,14 @@ const ParameterPage = () => {
   const handleParameterSetChange = (index, key, value) => {
     setParameterSets(prevSets => {
       const updatedSets = [...prevSets];
-      updatedSets[index] = { ...updatedSets[index], [key]: parseFloat(value) || '' }; 
+      updatedSets[index] = { ...updatedSets[index], [key]: value }; 
       return updatedSets;
     });
-
+  
     // Вызывает функцию updateParameterSet с передачей индекса и обновленного набора параметров
     updateParameterSet(index, {
       ...parameterSets[index],
-      [key]: parseFloat(value) || '',
+      [key]: value,
     });
   };
 
@@ -228,6 +205,7 @@ const ParameterPage = () => {
             <label htmlFor='time'>Время:</label>
             <input
               type='time'
+              step='1' // Добавьте эту строку, чтобы включить секунды
               value={parameterSet.time ? parameterSet.time : ''}
               onChange={(e) => handleParameterSetChange(index, 'time', e.target.value)}
             />
@@ -237,73 +215,73 @@ const ParameterPage = () => {
     ));
   };
 
-
   const createParameters = async () => {
     if (currentUser) {
-      const newParameterSets = parameterSets.map(set => ({
-        temperature_celsius: parseFloat(set.temperature_celsius),
-        humidity_percentage: parseFloat(set.humidity_percentage),
-        pressure_kpa: parseFloat(set.pressure_kpa),
-        pressure_mmhg: parseFloat(set.pressure_mmhg),
-        date_time: set.date_time,
-      }));
-
       try {
-        const responseSet = await fetch('/api/parameter_sets/create/', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer ' + String(authTokens.access),
-          },
-          body: JSON.stringify(newParameterSets),
-        });
-
-        if (responseSet.ok) {
-          console.log('Созданы наборы параметров');
-
-          const responseData = await responseSet.json();
-          const newParameters = responseData.map(id => ({
-            room: { room_number: selectedRoom.room_number },
-            measurement_instrument: {
-              name: parameter.measurement_instrument.name,
-              type: parameter.measurement_instrument.type,
-              serial_number: parameter.measurement_instrument.serial_number,
-              calibration_date: parameter.measurement_instrument.calibration_date,
-              calibration_interval: parameter.measurement_instrument.calibration_interval,
-            },
-            date_time: parameter.date_time,
-            responsible: {
-              id: currentUser.id,
-              first_name: currentUser.first_name,
-              last_name: currentUser.last_name,
-              patronymic: currentUser.patronymic,
-            },
-            parameter_set: id,
-          }));
-
-          const responseParameters = await fetch('/api/parameters/create/', {
+        const createdParamSets = [];
+  
+        for (const paramSetData of parameterSets) {
+          const responseParamSet = await fetch('/api/parameter_sets/create/', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               Authorization: 'Bearer ' + String(authTokens.access),
             },
-            body: JSON.stringify(newParameters),
+            body: JSON.stringify(paramSetData),
           });
-
-          if (responseParameters.ok) {
-            console.log('Созданы параметры');
-            navigate('/');
-          } else {
-            console.error('Failed to create parameters:', responseParameters.statusText);
+  
+          if (!responseParamSet.ok) {
+            console.error('Failed to create parameter set:', responseParamSet.statusText);
+            return;
           }
-        } else {
-          console.error('Failed to create parameter sets:', responseSet.statusText);
+  
+          const paramSet = await responseParamSet.json();
+          createdParamSets.push(paramSet);
         }
+  
+        const newParameters = {
+          room: { room_number: selectedRoom.room_number },
+          measurement_instrument: {
+            name: parameter.measurement_instrument.name,
+            type: parameter.measurement_instrument.type,
+            serial_number: parameter.measurement_instrument.serial_number,
+            calibration_date: parameter.measurement_instrument.calibration_date,
+            calibration_interval: parameter.measurement_instrument.calibration_interval,
+          },
+          responsible: {
+            id: currentUser.id,
+            first_name: currentUser.first_name,
+            last_name: currentUser.last_name,
+            patronymic: currentUser.patronymic,
+          },
+          parameter_sets: createdParamSets,  // Используем все созданные параметрсеты
+        };
+  
+        console.log('Sending Parameters:', newParameters); // Вот эту строку добавим
+  
+        const responseParameters = await fetch('/api/parameters/create/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + String(authTokens.access),
+          },
+          body: JSON.stringify(newParameters),
+        });
+  
+        if (!responseParameters.ok) {
+          console.error('Failed to create parameters:', responseParameters.statusText);
+          return;
+        }
+  
+        console.log('Созданы параметры, параметрсеты и записи');
+        navigate('/');
       } catch (error) {
-        console.error('Error while creating parameter sets and parameters:', error);
+        console.error('Error while creating parameters:', error);
       }
     }
   };
+
+
 
   const updateParameter = async () => {
     try {
@@ -476,12 +454,11 @@ const ParameterPage = () => {
               value={
                 parameter?.created_at
                   ? parameter.created_at.slice(0, 16) // Обрезаем миллисекунды
-                  : parameter?.date_time
-                  ? parameter.date_time.slice(0, 16) // Обрезаем миллисекунды
+                  : parameter?.created_at
+                  ? parameter.created_at.slice(0, 16) // Обрезаем миллисекунды
                   : ''
               }
               onChange={(e) => handleChange('created_at', e.target.value + 'Z')}
-              disabled
             />
           </div>
           <div className='parameter-fields-1'>
