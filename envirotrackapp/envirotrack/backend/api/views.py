@@ -69,7 +69,7 @@ def getEnviromentalParameters(request):
     responsible = request.query_params.get('responsible')
     room = request.query_params.get('room')
     date = request.query_params.get('date')
-    # print(f'date:{date}')
+    print(f'date:{date}')
     parameters = EnviromentalParameters.objects.all().prefetch_related('room', 'responsible', 'measurement_instrument')
 
     if responsible:
@@ -79,10 +79,10 @@ def getEnviromentalParameters(request):
         parameters = parameters.filter(room=room)
 
     if date:
-        date = datetime.strptime(date, '%Y-%m-%d').date()
-        parameters = parameters.filter(date_time__date=date)
+        created = datetime.strptime(date, '%Y-%m-%d').date()
+        parameters = parameters.filter(created_at__date=created)
 
-    # parameters = parameters.order_by('date_time')  # Добавляем сортировку по полю date_time
+    parameters = parameters.order_by('-created_at')  # Добавляем сортировку по дате создания записи
     
     serializer = EnvironmentalParametersSerializer(parameters, many=True, context={'request': request})
     return Response(serializer.data)
@@ -202,9 +202,6 @@ def updateEnvironmentalParameters(request, pk):
     serializer = EnvironmentalParametersSerializer(instance=environmental_params, data=request.data, context={'request': request})
 
     if serializer.is_valid():
-        if request.user.is_authenticated:
-            serializer.save(modified_by=request.user)
-
         room_data = request.data.get('room')
         responsible_data = request.data.get('responsible')
         measurement_instrument_data = request.data.get('measurement_instrument')
@@ -226,7 +223,7 @@ def updateEnvironmentalParameters(request, pk):
                 humidity_percentage=param_set_data.get('humidity_percentage'),
                 pressure_kpa=param_set_data.get('pressure_kpa'),
                 pressure_mmhg=param_set_data.get('pressure_mmhg'),
-                time=param_set_data.get('time')  # Исправлено: date_time -> time
+                time=param_set_data.get('time')
             )
             parameter_sets.append(parameter_set)
 
@@ -234,7 +231,7 @@ def updateEnvironmentalParameters(request, pk):
         environmental_params.responsible = responsible
         environmental_params.measurement_instrument = measurement_instrument
 
-        environmental_params.parameter_set.set(parameter_sets)
+        environmental_params.parameter_sets.set(parameter_sets)
 
         environmental_params.save()
 
