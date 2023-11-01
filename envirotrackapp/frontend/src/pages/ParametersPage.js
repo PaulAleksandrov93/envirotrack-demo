@@ -112,23 +112,6 @@ const ParameterPage = () => {
   }, [getParameter, getRooms, getMeasurementInstruments]);
 
 
-  const addParameterSet = () => {
-    if (currentUser) {
-      setParameterSets(prevSets => {
-        const newSet = { 
-          temperature_celsius: '',
-          humidity_percentage: '',
-          pressure_kpa: '',
-          pressure_mmhg: '',
-          time: '',
-        };
-        return [...prevSets, newSet];
-      });
-    } else {
-      console.error('User not authenticated');
-    }
-  };
-
   const updateParameterSet = (index, newSet) => {
     setParameterSets(prevSets => {
       return prevSets.map((set, i) => {
@@ -140,6 +123,28 @@ const ParameterPage = () => {
       });
     });
   };
+
+
+  const addParameterSet = () => {
+    if (currentUser) {
+      setParameterSets(prevSets => {
+        const newSet = { 
+          temperature_celsius: '',
+          humidity_percentage: '',
+          pressure_kpa: '',
+          pressure_mmhg: '',
+          time: '',
+        };
+        updateParameterSet(prevSets.length, newSet);
+        return [...prevSets, newSet];
+      });
+    } else {
+      console.error('User not authenticated');
+    }
+  };
+
+
+
   const deleteLastParameterSet = () => {
     if (currentUser) {
       if (parameterSets.length > 1) {
@@ -151,17 +156,35 @@ const ParameterPage = () => {
     }
   };
 
+
   const handleParameterSetChange = (index, key, value) => {
     setParameterSets(prevSets => {
-      const updatedSets = [...prevSets];
-      updatedSets[index] = { ...updatedSets[index], [key]: value }; 
-      return updatedSets;
-    });
-  
-    // Вызывает функцию updateParameterSet с передачей индекса и обновленного набора параметров
-    updateParameterSet(index, {
-      ...parameterSets[index],
-      [key]: value,
+        const updatedSets = prevSets.map((set, i) => {
+            if (i === index) {
+                return { ...set, [key]: value };
+            }
+            return set;
+        });
+
+        if (key === 'pressure_kpa') {
+            const kpaValue = parseFloat(value);
+            if (!isNaN(kpaValue)) {
+                updatedSets[index] = {
+                    ...updatedSets[index],
+                    pressure_mmhg: Math.round(kpaValue * 7.50062 * 100) / 100
+                };
+            }
+        } else if (key === 'pressure_mmhg') {
+            const mmHgValue = parseFloat(value);
+            if (!isNaN(mmHgValue)) {
+                updatedSets[index] = {
+                    ...updatedSets[index],
+                    pressure_kpa: Math.round((mmHgValue / 7.50062) * 100) / 100
+                };
+            }
+        }
+
+        return updatedSets;
     });
   };
 
@@ -188,24 +211,24 @@ const ParameterPage = () => {
           <div className='parameter-field'>
             <label htmlFor='pressure_kpa'>Давление, кПа:</label>
             <input
-              type='number'
-              value={parameterSet.pressure_kpa}
-              onChange={(e) => handleParameterSetChange(index, 'pressure_kpa', e.target.value)}
+                type='number'
+                value={parameterSet.pressure_kpa}
+                onChange={(e) => handleParameterSetChange(index, 'pressure_kpa', e.target.value)}
             />
           </div>
           <div className='parameter-field'>
             <label htmlFor='pressure_mmhg'>Давление, ммРС:</label>
             <input
-              type='number'
-              value={parameterSet.pressure_mmhg}
-              onChange={(e) => handleParameterSetChange(index, 'pressure_mmhg', e.target.value)}
+                type='number'
+                value={parameterSet.pressure_mmhg}
+                onChange={(e) => handleParameterSetChange(index, 'pressure_mmhg', e.target.value)}
             />
           </div>
           <div className='parameter-field'>
             <label htmlFor='time'>Время:</label>
             <input
               type='time'
-              step='1' // Добавьте эту строку, чтобы включить секунды
+              step='1' 
               value={parameterSet.time ? parameterSet.time : ''}
               onChange={(e) => handleParameterSetChange(index, 'time', e.target.value)}
             />
@@ -254,10 +277,11 @@ const ParameterPage = () => {
             last_name: currentUser.last_name,
             patronymic: currentUser.patronymic,
           },
-          parameter_sets: createdParamSets,  // Используем все созданные параметрсеты
+          parameter_sets: createdParamSets,  
+          created_at: parameter.created_at,
         };
   
-        console.log('Sending Parameters:', newParameters); // Вот эту строку добавим
+        console.log('Sending Parameters:', newParameters); 
   
         const responseParameters = await fetch('/api/parameters/create/', {
           method: 'POST',

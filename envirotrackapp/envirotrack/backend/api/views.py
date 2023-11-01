@@ -69,7 +69,7 @@ def getEnviromentalParameters(request):
     responsible = request.query_params.get('responsible')
     room = request.query_params.get('room')
     date = request.query_params.get('date')
-    print(f'date:{date}')
+    
     parameters = EnviromentalParameters.objects.all().prefetch_related('room', 'responsible', 'measurement_instrument')
 
     if responsible:
@@ -179,8 +179,9 @@ def createEnvironmentalParameters(request):
         'responsible': responsible_data,
         'measurement_instrument': measurement_instrument_data,
         'parameter_sets': parameter_sets_data,
+        'created_at': request.data.get('created_at')
     }
-
+    print("data=", data)
     new_serializer = EnvironmentalParametersSerializer(data=data, context={'request': request})
     if new_serializer.is_valid():
         new_serializer.save()

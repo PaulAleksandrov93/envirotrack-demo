@@ -2,6 +2,7 @@ services:
   web-app:
     build: 
       context: .
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     volumes:
@@ -11,8 +12,6 @@ services:
       - DB_NAME=dbname
       - DB_USER=dbuser
       - DB_PASS=pass
-    command: >
-      sh -c "python manage.py runserver 0.0.0.0:8000"
     depends_on:
       - database
 
@@ -26,12 +25,11 @@ services:
   web-app-frontend:
     build: 
       context: ./frontend  
+      dockerfile: Dockerfile.frontend
     ports:
       - "3000:3000"
     depends_on:
       - web-app 
-    command: sh -c "npm start"
-
   redis:
     image: redis:7.0.5-alpine
     hostname: redis

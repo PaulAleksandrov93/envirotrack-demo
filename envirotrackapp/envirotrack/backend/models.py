@@ -77,7 +77,7 @@ class EnviromentalParameters(models.Model):
     responsible = models.ForeignKey(Responsible, related_name='environmental_parameters', on_delete=models.SET_NULL, null=True)
     measurement_instrument = models.ForeignKey(MeasurementInstrument, on_delete=models.CASCADE, null=True) 
 
-    created_at = models.DateTimeField(auto_now_add=True, null=True)  # Дата и время создания
+    created_at = models.DateTimeField(null=True)  # Дата и время создания
     created_by = models.ForeignKey(User, related_name='created_parameters', on_delete=models.SET_NULL, null=True)  # Кто создал
     modified_at = models.DateTimeField(auto_now=True, null=True)  # Дата и время последнего изменения
     modified_by = models.ForeignKey(User, related_name='modified_parameters', on_delete=models.SET_NULL, null=True)  # Кто изменил
