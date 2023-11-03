@@ -10,11 +10,11 @@ const renderParameterSets = (parameterSets) => {
     <div key={index} className="parameter-set">
       <div className="parameter-item">
         <span>Набор {index + 1}:</span>
-        <span> Температура: {paramSet.temperature_celsius},</span>
-        <span> Влажность: {paramSet.humidity_percentage},</span>
-        <span> Давление (кПа): {paramSet.pressure_kpa},</span>
-        <span> Давление (мм рт. ст.): {paramSet.pressure_mmhg},</span>
-        <span> Время создания: {paramSet.time}</span>
+        <span> Температура: </span> {paramSet.temperature_celsius},
+        <span> Влажность: </span> {paramSet.humidity_percentage},
+        <span> Давление (кПа): </span> {paramSet.pressure_kpa},
+        <span> Давление (мм рт. ст.): </span> {paramSet.pressure_mmhg},
+        <span> Время создания: </span> {paramSet.time}
       </div>
     </div>
   ));
@@ -23,7 +23,11 @@ const renderParameterSets = (parameterSets) => {
 const ListItem = ({ parameter }) => {
   const getTime = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate() - 1).padStart(2, '0');
+  
+    return `${day}.${month}.${year}`;
   };
 
   return (
@@ -39,8 +43,11 @@ const ListItem = ({ parameter }) => {
               <span>Дата и время:</span> {getTime(parameter.created_at)}
             </div>
             <div className="parameter-item">
-              <span>Средство измерения:</span> {parameter.measurement_instrument ? parameter.measurement_instrument.name : 'Нет информации'}
-            </div>
+              <span>Средство измерения:</span> {parameter.measurement_instrument ? 
+                `${parameter.measurement_instrument.name} ${parameter.measurement_instrument.type} ${parameter.measurement_instrument.serial_number}` : 
+                'Нет информации'
+              }
+          </div>
           </div>
         </div>
       </div>

@@ -3,7 +3,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 40px; /* Увеличенный внутренний отступ */
+  padding: 40px;
+  max-width: 100%; /* Добавлено максимальная ширина */
 }
 
 .parameter-header {
@@ -20,17 +21,18 @@
 }
 
 .parameter-fields {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 30px; /* Увеличенный отступ между полями */
+  display: flex;
+  justify-content: space-between; /* Размещаем блоки слева, по середине и справа */
+  align-items: flex-start; /* Выравниваем блоки по верхнему краю */
+  gap: 30px; 
   width: 100%;
-  justify-content: center; /* Добавлено выравнивание по центру */
 }
 
 .parameter-field {
   display: flex;
   flex-direction: column;
-  margin-bottom: 20px; /* Увеличенный отступ снизу */
+  margin-bottom: 20px;
+  max-width: 100%; 
 }
 
 .parameter-field label {
@@ -69,7 +71,7 @@
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
   padding: 20px;
-  width: 400px;
+  max-width: 100%; 
 }
 
 .parameter-popup-header {
@@ -93,6 +95,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  max-width: 100%; 
 }
 
 .parameter-popup-buttons {
@@ -131,7 +134,7 @@
   margin-top: 16px;
 }
 
-/* Добавьте следующие стили в ваш файл ParameterPage.css */
+
 .parameter-button-create,
 .parameter-button-save,
 .parameter-button-delete,
@@ -204,28 +207,41 @@
 
 .parameter-fields-1 {
   display: flex;
-  flex-direction: row; /* Установите горизонтальное направление */
+  flex-direction: row; 
   align-items: center; /* Выравнивание по вертикали */
-  gap: 8px; /* Установите желаемое горизонтальное расстояние между элементами */
+  gap: 8px; 
   margin-top: 20px; /* Отступ сверху */
 }
 
-/* Измените стили для полей "Создано" и "Изменено" */
+
 .parameter-field-1 {
   display: flex;
   flex-direction: column;
   align-items: left;
-  margin-top: 0; /* Уберите верхний отступ */
-  font-size: 18px; /* Увеличьте размер шрифта */
+  margin-top: 0; 
+  font-size: 18px; 
 }
 
-/* Добавьте стили для меток "Создано" и "Изменено" */
+
 .created-by-label, .modified-by-label {
-  font-size: 18px; /* Увеличьте размер шрифта для меток */
+  font-size: 18px; 
 }
 
-/* Уменьшите верхний отступ для имени пользователя */
+
 .created-by-name, .modified-by-name {
-  font-size: 18px; /* Увеличьте размер шрифта для имени пользователя */
-  margin-top: 8px; /* Уменьшите верхний отступ */
+  font-size: 18px; 
+  margin-top: 8px;
 }
+
+.left-column {
+  flex: 1; 
+}
+
+.right-column {
+  flex: 1; 
+}
+
+.parameter-set {
+  flex: 1; 
+}
+

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ReactComponent as AddIcon } from '../assets/add.svg';
-import './AddButton.css'; // Подключите файл стилей
+import './AddButton.css'; 
 
 const AddButton = () => {
   return (
