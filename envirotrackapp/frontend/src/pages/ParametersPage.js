@@ -25,6 +25,7 @@ const ParameterPage = () => {
     }
   ]);
   const [parameter, setParameter] = useState({});
+  const [canAddParameterSet, setCanAddParameterSet] = useState(true);
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -127,17 +128,24 @@ const ParameterPage = () => {
 
   const addParameterSet = () => {
     if (currentUser) {
-      setParameterSets(prevSets => {
-        const newSet = { 
-          temperature_celsius: '',
-          humidity_percentage: '',
-          pressure_kpa: '',
-          pressure_mmhg: '',
-          time: '',
-        };
-        updateParameterSet(prevSets.length, newSet);
-        return [...prevSets, newSet];
-      });
+      if (canAddParameterSet) {
+        setParameterSets(prevSets => {
+          const newSet = { 
+            temperature_celsius: '',
+            humidity_percentage: '',
+            pressure_kpa: '',
+            pressure_mmhg: '',
+            time: '',
+          };
+          updateParameterSet(prevSets.length, newSet);
+          return [...prevSets, newSet];
+        });
+  
+        // Теперь, когда пользователь добавил один параметр сет, делаем кнопку неактивной
+        setCanAddParameterSet(false);
+      } else {
+        console.error('Можно добавить только один параметрсет');
+      }
     } else {
       console.error('User not authenticated');
     }
@@ -150,6 +158,9 @@ const ParameterPage = () => {
       if (parameterSets.length > 1) {
         const newParameterSets = parameterSets.slice(0, -1);
         setParameterSets(newParameterSets);
+  
+        // Когда пользователь удаляет параметрсет, делаем кнопку снова активной
+        setCanAddParameterSet(true);
       }
     } else {
       console.error('User not authenticated');

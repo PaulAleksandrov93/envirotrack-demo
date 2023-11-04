@@ -12,15 +12,19 @@ const ParametersListPage = () => {
 
   useEffect(() => {
     getParameters();
-  }, [filterData]);
+  }, [filterData, getParameters]);
 
   const getParameters = async () => {
     try {
       // Формируем URL запроса с учетом фильтров
       const url = new URL('http://localhost:8000/api/parameters/');
-      // url.searchParams.append('responsible', filterData.responsible);
-      // url.searchParams.append('room', filterData.room);
       
+      if (filterData.responsible) {
+        url.searchParams.append('responsible', filterData.responsible);
+      }
+      if (filterData.room) {
+        url.searchParams.append('room', filterData.room);
+      }
       // Добавляем фильтр по дате, если выбрана дата
       if (filterData.date) {
         url.searchParams.append('date', filterData.date);
