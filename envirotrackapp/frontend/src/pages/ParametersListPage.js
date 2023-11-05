@@ -12,7 +12,7 @@ const ParametersListPage = () => {
 
   useEffect(() => {
     getParameters();
-  }, [filterData, getParameters]);
+  }, [filterData]);
 
   const getParameters = async () => {
     try {

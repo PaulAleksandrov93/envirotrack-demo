@@ -16,6 +16,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from datetime import datetime, timedelta
+from django.contrib.auth.models import User
 
 from backend.models import Responsible, Room, EnviromentalParameters, MeasurementInstrument, ParameterSet
 from .serializers import EnvironmentalParametersSerializer, RoomSelectSerializer, ResponsibleSerializer, MeasurementInstrumentSerializer, FilterParametersSerializer, ParameterSetSerializer
@@ -207,6 +208,8 @@ def updateEnvironmentalParameters(request, pk):
         responsible_data = request.data.get('responsible')
         measurement_instrument_data = request.data.get('measurement_instrument')
         parameter_sets_data = request.data.get('parameter_sets', [])
+        modified_by_data = request.data.get('modified_by')
+        user_id = modified_by_data.get('user')
 
         room, created = Room.objects.get_or_create(room_number=room_data.get('room_number')) if room_data else (None, False)
         responsible, created = Responsible.objects.get_or_create(
@@ -233,6 +236,12 @@ def updateEnvironmentalParameters(request, pk):
         environmental_params.measurement_instrument = measurement_instrument
 
         environmental_params.parameter_sets.set(parameter_sets)
+        
+        try:
+            modified_by_user = User.objects.get(id=user_id)
+            environmental_params.modified_by = modified_by_user
+        except User.DoesNotExist:
+            print(f'Пользователь с id {user_id} не существует.')
 
         environmental_params.save()
 

@@ -288,11 +288,12 @@ const ParameterPage = () => {
             last_name: currentUser.last_name,
             patronymic: currentUser.patronymic,
           },
-          parameter_sets: createdParamSets,  
+          parameter_sets: createdParamSets,
+          created_by: `${currentUser.first_name} ${currentUser.last_name}`, // Добавляем информацию о создателе
           created_at: parameter.created_at,
         };
   
-        console.log('Sending Parameters:', newParameters); 
+        console.log('Sending Parameters:', newParameters);
   
         const responseParameters = await fetch('/api/parameters/create/', {
           method: 'POST',
@@ -320,38 +321,42 @@ const ParameterPage = () => {
 
   const updateParameter = async () => {
     try {
-        const response = await fetch(`/api/parameters/update/${id}/`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: 'Bearer ' + String(authTokens.access),
-            },
-            body: JSON.stringify({
-                room: { room_number: selectedRoom.room_number },
-                measurement_instrument: {
-                    name: parameter.measurement_instrument.name,
-                    type: parameter.measurement_instrument.type,
-                    serial_number: parameter.measurement_instrument.serial_number,
-                    calibration_date: parameter.measurement_instrument.calibration_date,
-                    calibration_interval: parameter.measurement_instrument.calibration_interval,
-                },
-                responsible: {
-                    id: currentUser.id,
-                    first_name: currentUser.first_name,
-                    last_name: currentUser.last_name,
-                    patronymic: currentUser.patronymic,
-                },
-                parameter_sets: parameterSets,  // Используем все созданные параметрсеты
-            }),
-        });
-        if (response.ok) {
-            console.log('Запись успешно обновлена');
-            navigate('/');
-        } else {
-            console.error('Failed to update parameter:', response.statusText);
-        }
+      const modifiedBy = currentUser ? currentUser : null;
+  
+      const response = await fetch(`/api/parameters/update/${id}/`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + String(authTokens.access),
+        },
+        body: JSON.stringify({
+          room: { room_number: selectedRoom.room_number },
+          measurement_instrument: {
+            name: parameter.measurement_instrument.name,
+            type: parameter.measurement_instrument.type,
+            serial_number: parameter.measurement_instrument.serial_number,
+            calibration_date: parameter.measurement_instrument.calibration_date,
+            calibration_interval: parameter.measurement_instrument.calibration_interval,
+          },
+          responsible: {
+            id: currentUser.id,
+            first_name: currentUser.first_name,
+            last_name: currentUser.last_name,
+            patronymic: currentUser.patronymic,
+          },
+          parameter_sets: parameterSets,
+          modified_by: modifiedBy, // Добавляем информацию о том, кто изменил запись
+        }),
+      });
+  
+      if (response.ok) {
+        console.log('Запись успешно обновлена');
+        navigate('/');
+      } else {
+        console.error('Failed to update parameter:', response.statusText);
+      }
     } catch (error) {
-        console.error('Error while updating parameter:', error);
+      console.error('Error while updating parameter:', error);
     }
   };
 
