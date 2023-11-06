@@ -75,23 +75,19 @@ export const AuthProvider = ({children}) => {
 
     useEffect(()=> {
 
-        const handleUpdateToken = async () => {
-            if(loading){
-                await updateToken()
-            }
+        if(loading){
+            updateToken()
         }
-    
-        handleUpdateToken(); // Вызов функции внутри useEffect
-    
+
         let fourMinutes = 1000 * 60 * 4
         let interval = setInterval(()=> {
             if(authTokens){
-                handleUpdateToken(); // Вызов функции внутри интервала
+                updateToken()
             }
         }, fourMinutes)
         return ()=> clearInterval(interval)
-    
-    }, [authTokens, loading]);
+
+    }, [authTokens, loading])
 
 
     return(

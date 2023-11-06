@@ -318,7 +318,6 @@ const ParameterPage = () => {
   };
 
 
-
   const updateParameter = async () => {
     try {
       const modifiedBy = currentUser ? currentUser : null;
@@ -360,24 +359,28 @@ const ParameterPage = () => {
     }
   };
 
+
   const deleteParameter = async () => {
     if (parameter !== null) {
-      try {
-        const response = await fetch(`/api/parameters/delete/${id}/`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer ' + String(authTokens.access),
-          },
-          body: JSON.stringify(parameter),
-        });
-        if (!response.ok) {
-          console.error('Failed to delete parameter:', response.statusText);
-        } else {
-          navigate('/');
+      const confirmed = window.confirm("Вы уверены, что хотите удалить запись?");
+      if (confirmed) {
+        try {
+          const response = await fetch(`/api/parameters/delete/${id}/`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: 'Bearer ' + String(authTokens.access),
+            },
+            body: JSON.stringify(parameter),
+          });
+          if (!response.ok) {
+            console.error('Failed to delete parameter:', response.statusText);
+          } else {
+            navigate('/');
+          }
+        } catch (error) {
+          console.error('Error while deleting parameter:', error);
         }
-      } catch (error) {
-        console.error('Error while deleting parameter:', error);
       }
     }
   };

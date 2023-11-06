@@ -205,18 +205,13 @@ def updateEnvironmentalParameters(request, pk):
 
     if serializer.is_valid():
         room_data = request.data.get('room')
-        responsible_data = request.data.get('responsible')
         measurement_instrument_data = request.data.get('measurement_instrument')
         parameter_sets_data = request.data.get('parameter_sets', [])
         modified_by_data = request.data.get('modified_by')
         user_id = modified_by_data.get('user')
 
         room, created = Room.objects.get_or_create(room_number=room_data.get('room_number')) if room_data else (None, False)
-        responsible, created = Responsible.objects.get_or_create(
-            first_name=responsible_data.get('first_name'),
-            last_name=responsible_data.get('last_name'),
-            patronymic=responsible_data.get('patronymic')
-        ) if responsible_data else (None, False)
+        
         measurement_instrument, created = MeasurementInstrument.objects.get_or_create(**measurement_instrument_data) if measurement_instrument_data else (None, False)
 
         parameter_sets = []
@@ -232,7 +227,6 @@ def updateEnvironmentalParameters(request, pk):
             parameter_sets.append(parameter_set)
 
         environmental_params.room = room
-        environmental_params.responsible = responsible
         environmental_params.measurement_instrument = measurement_instrument
 
         environmental_params.parameter_sets.set(parameter_sets)
@@ -248,9 +242,6 @@ def updateEnvironmentalParameters(request, pk):
         return Response(serializer.data)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-# ===
 
 
 @api_view(['DELETE'])
